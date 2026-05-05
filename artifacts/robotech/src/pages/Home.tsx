@@ -2,30 +2,21 @@ import { useState, useEffect } from "react";
 import { labsList, difficultyColors, type Difficulty } from "../data/labs";
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
+import type { T, Lang } from "../hooks/useLang";
 
 interface HomeProps {
   onOpenLab: (key: string) => void;
   user: User;
   theme: "dark" | "light";
+  t: T;
+  lang: Lang;
 }
 
 type Filter = "all" | Difficulty;
 
-const stats = [
-  { icon: "fa-flask",        value: "8",   label: "مختبراً تفاعلياً", grad: "linear-gradient(135deg,#7c6bfa,#a55eea)" },
-  { icon: "fa-play-circle",  value: "30+", label: "درساً بالفيديو",   grad: "linear-gradient(135deg,#4facfe,#00f2fe)" },
-  { icon: "fa-trophy",       value: "50+", label: "تحدياً للأبطال",   grad: "linear-gradient(135deg,#f7971e,#ffd200)" },
-  { icon: "fa-star",         value: "∞",   label: "مغامرة تنتظرك",   grad: "linear-gradient(135deg,#43e97b,#38f9d7)" },
-];
+const howStepIcons = ["fa-hand-pointer", "fa-video", "fa-laptop-code", "fa-trophy"];
 
-const howSteps = [
-  { num: "١", icon: "fa-hand-pointer", title: "اختر مختبرك",    desc: "انقر على أي مختبر من الشبكة أدناه" },
-  { num: "٢", icon: "fa-video",        title: "شاهد الشرح",     desc: "فيديوهات قصيرة وممتعة تشرح كل خطوة" },
-  { num: "٣", icon: "fa-laptop-code",  title: "جرّب المحاكي",   desc: "طبّق مباشرةً في المحاكي التفاعلي" },
-  { num: "٤", icon: "fa-trophy",       title: "أنجز المهام",     desc: "اكمل قائمة البطل واحصد إنجازاتك" },
-];
-
-export default function Home({ onOpenLab, user, theme }: HomeProps) {
+export default function Home({ onOpenLab, user, t }: HomeProps) {
   const [filter, setFilter] = useState<Filter>("all");
   const [progMap, setProgMap] = useState<Record<string, number>>({});
 
@@ -39,6 +30,20 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
 
   const filtered = filter === "all" ? labsList : labsList.filter((l) => l.difficulty === filter);
 
+  const stats = [
+    { icon: "fa-flask",       value: String(labsList.length), label: t.stat1, grad: "linear-gradient(135deg,#7c6bfa,#a55eea)" },
+    { icon: "fa-play-circle", value: "30+",                   label: t.stat2, grad: "linear-gradient(135deg,#4facfe,#00f2fe)" },
+    { icon: "fa-trophy",      value: "50+",                   label: t.stat3, grad: "linear-gradient(135deg,#f7971e,#ffd200)" },
+    { icon: "fa-star",        value: "∞",                     label: t.stat4, grad: "linear-gradient(135deg,#43e97b,#38f9d7)" },
+  ];
+
+  const howSteps = [
+    { num: "١", icon: howStepIcons[0], title: t.how1Title, desc: t.how1Desc },
+    { num: "٢", icon: howStepIcons[1], title: t.how2Title, desc: t.how2Desc },
+    { num: "٣", icon: howStepIcons[2], title: t.how3Title, desc: t.how3Desc },
+    { num: "٤", icon: howStepIcons[3], title: t.how4Title, desc: t.how4Desc },
+  ];
+
   return (
     <>
       <div className="page-content view-enter">
@@ -48,24 +53,19 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
           <section className="hero-section">
             <div className="hero-badge">
               <i className="fas fa-robot" />
-              أكاديمية RoboTech — منصة تعليم الروبوتيك للأطفال
+              {t.heroBadge}
             </div>
             <h1 className="hero-title">
-              أهلاً {user.avatar} {user.name}!&nbsp;<br />
-              <span>استعد للمغامرة 🚀</span>
+              {t.heroTitle1} {user.avatar} {user.name}!&nbsp;<br />
+              <span>{t.heroTitle2}</span>
             </h1>
-            <p className="hero-subtitle">
-              اكتشف عالم الروبوتات والبرمجة عبر مختبرات تفاعلية مدهشة، فيديوهات احترافية،
-              ومحاكيات متطورة — كل هذا مجاناً وباللغة العربية.
-            </p>
+            <p className="hero-subtitle">{t.heroSub}</p>
             <div className="hero-cta-row">
               <button className="btn-primary" onClick={() => document.getElementById("labs")?.scrollIntoView({ behavior: "smooth" })}>
-                <i className="fas fa-rocket" />
-                ابدأ الاستكشاف
+                <i className="fas fa-rocket" /> {t.startExplore}
               </button>
               <button className="btn-outline" onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}>
-                <i className="fas fa-info-circle" />
-                كيف يعمل؟
+                <i className="fas fa-info-circle" /> {t.howItWork}
               </button>
             </div>
           </section>
@@ -89,9 +89,9 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
               <div>
                 <h2>
                   <i className="fas fa-th-large" style={{ color: "var(--accent)" }} />
-                  اختر مختبرك
+                  {t.chooseLab}
                 </h2>
-                <p>كل مختبر يحتوي على فيديوهات شرح + محاكي تفاعلي + قائمة مهام البطل</p>
+                <p>{t.labsDesc}</p>
               </div>
               <div className="filter-row">
                 {(["all", "beginner", "intermediate", "advanced"] as Filter[]).map((f) => (
@@ -100,7 +100,7 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
                     className={`filter-btn${filter === f ? " active" : ""}`}
                     onClick={() => setFilter(f)}
                   >
-                    {f === "all" ? "🌟 الكل" : f === "beginner" ? "🟢 مبتدئ" : f === "intermediate" ? "🟡 متوسط" : "🔴 متقدم"}
+                    {f === "all" ? t.filterAll : f === "beginner" ? t.filterBeg : f === "intermediate" ? t.filterInt : t.filterAdv}
                   </button>
                 ))}
               </div>
@@ -118,7 +118,7 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpenLab(lab.key); } }}
                     tabIndex={0}
                     role="button"
-                    aria-label={`فتح ${lab.title}`}
+                    aria-label={`${t.enterLab} ${lab.title}`}
                   >
                     <div className="card-glow" style={{ background: lab.glowColor }} />
 
@@ -152,17 +152,15 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
                       <div className="card-meta">
                         <span className="card-meta-item">
                           <i className="fas fa-play-circle" style={{ color: lab.color }} />
-                          {lab.lessons.length} دروس
+                          {lab.lessons.length} {t.lessons}
                         </span>
                         <span className="card-meta-item">
                           <i className="fas fa-child" style={{ color: lab.color }} />
-                          {lab.ageRange} سنة
+                          {lab.ageRange} {t.yearsOld}
                         </span>
                       </div>
                       {prog > 0 && (
-                        <span style={{ fontSize: 12, fontWeight: 800, color: lab.color }}>
-                          {prog}%
-                        </span>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: lab.color }}>{prog}%</span>
                       )}
                     </div>
 
@@ -173,7 +171,7 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
                     )}
 
                     <div className="card-enter-btn" style={{ background: lab.gradient }}>
-                      <i className="fas fa-play" /> ادخل المختبر
+                      <i className="fas fa-play" /> {t.enterLab}
                     </div>
                   </article>
                 );
@@ -186,7 +184,7 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
             <div className="section-head">
               <h2>
                 <i className="fas fa-question-circle" style={{ color: "var(--accent-2)" }} />
-                كيف تبدأ؟
+                {t.howTitle}
               </h2>
             </div>
             <div className="how-grid">
@@ -208,7 +206,7 @@ export default function Home({ onOpenLab, user, theme }: HomeProps) {
 
       <footer className="site-footer">
         <i className="fas fa-robot" style={{ color: "var(--accent)", marginLeft: 8 }} />
-        © 2025 أكاديمية RoboTech — تعليم الروبوتيك للجيل القادم بطريقة ممتعة وآمنة
+        {t.footer}
       </footer>
     </>
   );

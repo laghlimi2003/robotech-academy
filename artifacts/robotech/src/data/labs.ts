@@ -43,7 +43,6 @@ export const labConfigs: Record<string, LabConfig> = {
     gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     glowColor: "rgba(79,172,254,0.5)",
     tag: "🎮 الأكثر شعبية",
-    // Snap! works reliably in iframes (MIT-licensed Scratch alternative)
     simulatorUrl: "https://snap.berkeley.edu/snap/snap.html",
     externalUrl: "https://scratch.mit.edu/",
     lessons: [
@@ -55,30 +54,6 @@ export const labConfigs: Record<string, LabConfig> = {
     ],
     heroTasks: ["افتح محرر Snap!", "أضف شخصية جديدة", "حرّك الشخصية بالسهام", "أضف صوتاً للمشروع", "أنشئ خلفية ملونة", "احفظ وشارك مشروعك"],
     skills: ["تفكير منطقي", "حل المشكلات", "إبداع", "تسلسل الأوامر"],
-  },
-
-  microbit: {
-    key: "microbit",
-    title: "مختبر Micro:bit",
-    subtitle: "الحوسبة المادية والمستشعرات",
-    description: "اكتشف عالم الكمبيوتر الصغير! برمج لوحة Micro:bit لتصنع مشاريع إلكترونية ممتعة.",
-    difficulty: "beginner",
-    difficultyLabel: "مبتدئ",
-    ageRange: "8 - 14",
-    faIcon: "fa-memory",
-    color: "#43e97b",
-    gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-    glowColor: "rgba(67,233,123,0.5)",
-    tag: "✨ جديد 2025",
-    simulatorUrl: "https://makecode.microbit.org/",
-    externalUrl: "https://makecode.microbit.org/",
-    lessons: [
-      { title: "ما هو Micro:bit؟", description: "تعرف على اللوحة والمستشعرات والشاشة LED.", type: "video", src: "videos/microbit-intro.mp4", duration: "05:00" },
-      { title: "برمجة الشاشة LED", description: "اعرض رسائل وصور على الشاشة الصغيرة.", type: "video", src: "videos/microbit-led.mp4", duration: "07:30" },
-      { title: "استشعار الحركة", description: "استخدم مقياس التسارع لكشف الحركة.", type: "embed", src: "", duration: "09:00" },
-    ],
-    heroTasks: ["افتح MakeCode", "اعرض اسمك على LED", "اكتشف مستشعر الحرارة", "أنشئ تطبيق بوصلة", "برمّج لعبة هز اللوحة"],
-    skills: ["إلكترونيات", "MicroPython", "مستشعرات", "IoT"],
   },
 
   arduino: {
@@ -152,30 +127,6 @@ export const labConfigs: Record<string, LabConfig> = {
     ],
     heroTasks: ["افتح محاكي GearS", "حمّل بيئة EV3", "برمج حركة للأمام", "أضف منعطف 90°", "تجاوز العائق الأول", "حل تحدي المتاهة"],
     skills: ["Python", "EV3-Python", "خوارزميات", "حساسات المسافة"],
-  },
-
-  tinkercad: {
-    key: "tinkercad",
-    title: "Tinkercad المتطور",
-    subtitle: "تصميم ثلاثي الأبعاد + دوائر",
-    description: "صمّم نماذج ثلاثية الأبعاد للطباعة وشبّك دوائر إلكترونية احترافية في بيئة واحدة.",
-    difficulty: "intermediate",
-    difficultyLabel: "متوسط",
-    ageRange: "10 - 16",
-    faIcon: "fa-cube",
-    color: "#f7971e",
-    gradient: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)",
-    glowColor: "rgba(247,151,30,0.5)",
-    tag: "🖨️ طباعة 3D",
-    simulatorUrl: "https://www.tinkercad.com/",
-    externalUrl: "https://www.tinkercad.com/",
-    lessons: [
-      { title: "مقدمة Tinkercad", description: "تعرف على بيئة التصميم ثلاثي الأبعاد.", type: "video", src: "videos/tinkercad-intro.mp4", duration: "06:00" },
-      { title: "بناء نموذج أول", description: "صمّم مجسماً بسيطاً خطوة بخطوة.", type: "video", src: "videos/tinkercad-model.mp4", duration: "10:00" },
-      { title: "دوائر الأردوينو", description: "رسم دائرة كهربائية ومحاكاتها.", type: "embed", src: "", duration: "08:30" },
-    ],
-    heroTasks: ["افتح Tinkercad", "أنشئ حساباً مجانياً", "ارسم مكعباً ثلاثي الأبعاد", "غيّر شكله وحجمه", "صدّر الملف للطباعة"],
-    skills: ["CAD", "طباعة 3D", "تصميم هندسي", "Autodesk"],
   },
 
   python: {

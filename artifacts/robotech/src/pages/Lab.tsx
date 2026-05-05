@@ -4,23 +4,30 @@ import { useProgress } from "../hooks/useProgress";
 import ProgressRing from "../components/ProgressRing";
 import BadgeToast from "../components/BadgeToast";
 import Confetti from "../components/Confetti";
+import type { T, Lang } from "../hooks/useLang";
 
 interface LabProps {
   labKey: string;
   onGoHome: () => void;
   theme: "dark" | "light";
   toggleTheme: () => void;
+  t: T;
+  lang: Lang;
+  setLang: (l: Lang) => void;
 }
 
-export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) {
+const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr: "🇫🇷" };
+
+export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, setLang }: LabProps) {
   const config = labConfigs[labKey];
 
-  const [lessonIdx, setLessonIdx]     = useState(0);
-  const [simReady, setSimReady]       = useState(false);   // user clicked Launch
-  const [simLoaded, setSimLoaded]     = useState(false);   // iframe onLoad fired
-  const [showConfetti, setShowCon]    = useState(false);
-  const [toast, setToast]             = useState({ visible: false, msg: "" });
-  const [prevCount, setPrevCount]     = useState(0);
+  const [lessonIdx, setLessonIdx]  = useState(0);
+  const [simReady, setSimReady]    = useState(false);
+  const [simLoaded, setSimLoaded]  = useState(false);
+  const [showConfetti, setShowCon] = useState(false);
+  const [toast, setToast]          = useState({ visible: false, msg: "" });
+  const [prevCount, setPrevCount]  = useState(0);
+  const [showLangMenu, setShowLangMenu] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const embedRef = useRef<HTMLIFrameElement>(null);
@@ -36,14 +43,12 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
   const isEmbed  = lesson?.type === "embed";
   const isVideo  = lesson?.type === "video";
 
-  /* ── clear media ── */
   const pauseMedia = useCallback(() => {
     try { videoRef.current?.pause(); } catch (_) {}
     if (videoRef.current) { videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     if (embedRef.current) embedRef.current.src = "";
   }, []);
 
-  /* ── apply lesson ── */
   const applyLesson = useCallback((idx: number) => {
     pauseMedia();
     const l = config?.lessons[idx];
@@ -54,7 +59,6 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
     });
   }, [config, pauseMedia]);
 
-  /* ── on lab change ── */
   useEffect(() => {
     setSimReady(false);
     setSimLoaded(false);
@@ -65,7 +69,6 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
     setPrevCount(doneTasks.length);
   }, [labKey]);
 
-  /* ── task toast ── */
   useEffect(() => {
     if (doneTasks.length > prevCount) {
       if (isAllTasksDone) {
@@ -119,7 +122,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
       {/* ══ TOP BAR ══ */}
       <div className="lab-bar">
         <button className="lb-btn back" onClick={handleGoHome}>
-          <i className="fas fa-arrow-right" /> الرئيسية
+          <i className="fas fa-arrow-right" /> {t.backHome}
         </button>
 
         <div className="lab-bar-icon" style={{ background: config.gradient }}>
@@ -132,19 +135,40 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
             <i className="fas fa-chart-pie" /> {overallPercent}%
           </span>
 
+          {/* Language in lab bar */}
+          <div className="lang-selector">
+            <button className="lang-btn" onClick={() => setShowLangMenu(v => !v)}>
+              {LANG_FLAGS[lang]} {lang.toUpperCase()}
+              <i className="fas fa-chevron-down" style={{ fontSize: 10 }} />
+            </button>
+            {showLangMenu && (
+              <div className="lang-dropdown">
+                {(["ar", "en", "fr"] as const).map(l => (
+                  <button
+                    key={l}
+                    className={`lang-option${lang === l ? " active" : ""}`}
+                    onClick={() => { setLang(l); setShowLangMenu(false); }}
+                  >
+                    {LANG_FLAGS[l]} {l === "ar" ? "العربية" : l === "en" ? "English" : "Français"}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button className="theme-toggle" onClick={toggleTheme}>
             {theme === "dark"
-              ? <><i className="fas fa-sun" /> فاتح</>
-              : <><i className="fas fa-moon" /> داكن</>}
+              ? <><i className="fas fa-sun" /> {t.light}</>
+              : <><i className="fas fa-moon" /> {t.dark}</>}
           </button>
 
           {simReady && (
             <button className="lb-btn reload" onClick={reloadSim}>
-              <i className="fas fa-sync-alt" /> إعادة تحميل
+              <i className="fas fa-sync-alt" /> {t.reload}
             </button>
           )}
           <button className="lb-btn open" onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}>
-            <i className="fas fa-up-right-from-square" /> فتح منفصلاً
+            <i className="fas fa-up-right-from-square" /> {t.openSep}
           </button>
         </div>
       </div>
@@ -155,17 +179,15 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
         {/* ── SIDE PANEL ── */}
         <aside className="lab-side">
 
-          {/* Progress */}
           <div className="progress-panel">
-            <h4><i className="fas fa-chart-pie" /> تقدمك في المختبر</h4>
+            <h4><i className="fas fa-chart-pie" /> {t.yourProgress}</h4>
             <div className="progress-rings">
-              <ProgressRing percent={lessonPercent}  color={config.color} label="الدروس" />
-              <ProgressRing percent={taskPercent}    color="#43e97b"      label="المهام" />
-              <ProgressRing percent={overallPercent} color="#f7971e"      label="الإجمالي" />
+              <ProgressRing percent={lessonPercent}  color={config.color} label={t.lessonsCount} />
+              <ProgressRing percent={taskPercent}    color="#43e97b"      label={t.heroTasks} />
+              <ProgressRing percent={overallPercent} color="#f7971e"      label="%" />
             </div>
           </div>
 
-          {/* Video Player */}
           <div className="video-panel">
             <div className="video-stage">
               <video
@@ -176,33 +198,32 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
               <iframe
                 ref={embedRef}
                 style={{ display: hasMedia && isEmbed ? "block" : "none" }}
-                title="فيديو الدرس"
+                title="lesson"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
               {!hasMedia && (
                 <div className="video-empty">
                   <div className="video-empty-icon"><i className="fas fa-video" /></div>
-                  <h4>فيديوهات الشرح</h4>
-                  <p>اختر درساً من القائمة أدناه لتشغيل الفيديو.</p>
+                  <h4>{t.lessonsList}</h4>
+                  <p>{t.labsDesc}</p>
                 </div>
               )}
             </div>
             <div className="video-info">
               <div className="video-badge">
                 <i className="fas fa-circle-play" />
-                الدرس {lessonIdx + 1} من {config.lessons.length}
+                {lessonIdx + 1} / {config.lessons.length}
               </div>
-              <h4>{lesson?.title ?? "اختر درساً"}</h4>
-              <p>{lesson?.description ?? "انقر على أحد الدروس أدناه للبدء."}</p>
+              <h4>{lesson?.title ?? t.lessonsList}</h4>
+              <p>{lesson?.description ?? ""}</p>
             </div>
           </div>
 
-          {/* Lesson List */}
           <div className="lesson-list-panel">
             <div className="lesson-list-head">
-              <h4><i className="fas fa-list" /> قائمة الدروس</h4>
-              <span>{config.lessons.length} دروس</span>
+              <h4><i className="fas fa-list" /> {t.lessonsList}</h4>
+              <span>{config.lessons.length} {t.lessonsCount}</span>
             </div>
             <div className="lesson-scroll">
               {config.lessons.map((les, idx) => {
@@ -222,17 +243,16 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
                         <i className="fas fa-clock" style={{ marginLeft: 4 }} />{les.duration}
                       </span>
                     </div>
-                    <span className="lesson-type-pill">{les.type === "embed" ? "Embed" : "Video"}</span>
+                    <span className="lesson-type-pill">{les.type}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Hero Tasks */}
           <div className="tasks-panel">
             <div className="tasks-head">
-              <h4><i className="fas fa-trophy" style={{ color: "#f7971e" }} /> مهام البطل</h4>
+              <h4><i className="fas fa-trophy" style={{ color: "#f7971e" }} /> {t.heroTasks}</h4>
               <span className="tasks-progress-text">{doneTasks.length}/{config.heroTasks.length}</span>
             </div>
             {config.heroTasks.map((task, idx) => {
@@ -249,9 +269,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
             })}
           </div>
 
-          {/* Skills */}
           <div className="progress-panel" style={{ padding: "12px 14px" }}>
-            <h4><i className="fas fa-graduation-cap" /> المهارات المكتسبة</h4>
+            <h4><i className="fas fa-graduation-cap" /> {t.acquiredSkills}</h4>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {config.skills.map((s) => (
                 <span key={s} className="skill-tag" style={{ fontSize: 12 }}>{s}</span>
@@ -264,45 +283,38 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) 
         {/* ══ SIMULATOR AREA ══ */}
         <div className="sim-area">
 
-          {/* LAUNCH SCREEN — shown before user clicks */}
           {!simReady && (
             <div className="sim-launch">
               <div className="sim-launch-icon" style={{ background: config.gradient }}>
                 <i className={`fas ${config.faIcon}`} />
               </div>
               <h2 className="sim-launch-title">{config.title}</h2>
-              <p className="sim-launch-desc">
-                انقر على الزر أدناه لتحميل المحاكي التفاعلي
-              </p>
+              <p className="sim-launch-desc">{t.clickToLoad}</p>
               <div className="sim-launch-meta">
-                <span><i className="fas fa-child" /> {config.ageRange} سنة</span>
+                <span><i className="fas fa-child" /> {config.ageRange} {t.yearsOld}</span>
                 <span><i className="fas fa-signal" /> {config.difficultyLabel}</span>
                 <span><i className="fas fa-star" /> {config.tag}</span>
               </div>
               <button className="sim-launch-btn" onClick={launchSim} style={{ background: config.gradient }}>
-                <i className="fas fa-play" />
-                تشغيل المحاكي
+                <i className="fas fa-play" /> {t.launchSim}
               </button>
               <button
                 className="sim-launch-ext"
                 onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
               >
-                <i className="fas fa-up-right-from-square" />
-                فتح في نافذة جديدة (أسرع)
+                <i className="fas fa-up-right-from-square" /> {t.openNew}
               </button>
             </div>
           )}
 
-          {/* Loading spinner — shown while iframe loads */}
           {simReady && !simLoaded && (
             <div className="sim-loader">
               <div className="loader-spinner" style={{ borderTopColor: config.color }} />
-              <div className="loader-text">جاري تحميل {config.title}...</div>
-              <div className="loader-hint">قد يستغرق بعض الوقت — يُحمَّل مرة واحدة فقط</div>
+              <div className="loader-text">{t.loading} {config.title}...</div>
+              <div className="loader-hint">{t.loadHint}</div>
             </div>
           )}
 
-          {/* The actual iframe */}
           <iframe
             ref={simRef}
             className="sim-iframe"
