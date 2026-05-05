@@ -109,7 +109,7 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
       <div className="lab-container">
         <div className="lab-header">
           <button className="btn-back" onClick={handleGoHome}>
-            <span>→</span>
+            <i className="fas fa-arrow-right" />
             العودة للرئيسية
           </button>
 
@@ -120,11 +120,11 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
               className="btn-open"
               onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
             >
-              <span>↗</span>
+              <i className="fas fa-up-right-from-square" />
               فتح في نافذة جديدة
             </button>
             <button className="btn-reload" onClick={reloadSimulator}>
-              <span>↺</span>
+              <i className="fas fa-sync-alt" />
               إعادة تحميل
             </button>
           </div>
@@ -134,7 +134,7 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
           {/* ===== SIDE PANEL ===== */}
           <aside className="lessons-panel">
             <div className="lessons-header">
-              <h3>▶ فيديوهات الشرح</h3>
+              <h3><i className="fas fa-circle-play" /> فيديوهات الشرح</h3>
               <p className="lessons-subtitle">اختر درسًا من القائمة وسيظهر هنا.</p>
             </div>
 
