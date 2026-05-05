@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>أكاديمية RoboTech | مختبرات الروبوتات المستقبلية</title>
+
+  <!-- Google Font -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- الخلفية -->
+  <div class="bg-blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="glass-header">
+    <button class="logo" onclick="goHome()" aria-label="العودة إلى الصفحة الرئيسية">
+      <span>🤖</span>
+      <span>RoboTech</span>
+    </button>
+
+    <nav>
+      <ul class="nav-links">
+        <li><a href="#" onclick="goHome(); return false;">الرئيسية</a></li>
+        <li><a href="#labs-section">المختبرات</a></li>
+        <li><a href="#">دروسي</a></li>
+        <li><a href="#">عن الأكاديمية</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- الصفحة الرئيسية -->
+  <main id="home-view" class="container">
+    <section class="welcome-section">
+      <span class="hero-badge">منصة تعليمية تفاعلية</span>
+      <h1 class="glow-text">مرحباً بك يا بطل المستقبل! 🚀</h1>
+      <p class="subtitle">
+        اكتشف عالم الروبوتات والبرمجة من خلال مختبرات تفاعلية ممتعة وآمنة،
+        مع فيديوهات شرح منظمة لكل مسار تعليمي.
+      </p>
+    </section>
+
+    <section id="labs-section" class="cards-grid">
+      <article class="premium-card scratch-card" onclick="openLab('scratch')" tabindex="0" role="button" aria-label="فتح عالم سكراتش">
+        <div class="icon-box"><i class="fas fa-puzzle-piece"></i></div>
+        <div class="info">
+          <h3>عالم سكراتش</h3>
+          <p>برمجة الألعاب والقصص التفاعلية</p>
+        </div>
+      </article>
+
+      <article class="premium-card arduino-card" onclick="openLab('arduino')" tabindex="0" role="button" aria-label="فتح مختبر أردوينو">
+        <div class="icon-box"><i class="fas fa-microchip"></i></div>
+        <div class="info">
+          <h3>مختبر أردوينو</h3>
+          <p>الإلكترونيات والدوائر الذكية</p>
+        </div>
+      </article>
+
+      <article class="premium-card wedo-card" onclick="openLab('wedo')" tabindex="0" role="button" aria-label="فتح بيئة WeDo 2.0">
+        <div class="icon-box"><i class="fas fa-robot"></i></div>
+        <div class="info">
+          <h3>بيئة WeDo 2.0</h3>
+          <p>بناء وبرمجة الروبوتات البسيطة</p>
+        </div>
+      </article>
+
+      <article class="premium-card gears-card" onclick="openLab('gears')" tabindex="0" role="button" aria-label="فتح محاكي GearS">
+        <div class="icon-box"><i class="fas fa-cog"></i></div>
+        <div class="info">
+          <h3>محاكي GearS</h3>
+          <p>روبوتات EV3 و Spike Prime</p>
+        </div>
+      </article>
+
+      <article class="premium-card advanced-card" onclick="openLab('advanced')" tabindex="0" role="button" aria-label="فتح الروبوتات الصناعية">
+        <div class="icon-box"><i class="fas fa-industry"></i></div>
+        <div class="info">
+          <h3>روبوتات صناعية</h3>
+          <p>محاكاة أذرع الروبوت المتقدمة</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <!-- صفحة المختبر -->
+  <section id="lab-view" class="hidden" aria-live="polite">
+    <div class="lab-container">
+
+      <div class="lab-header">
+        <button class="btn-back" onclick="goHome()">
+          <i class="fas fa-arrow-right"></i>
+          العودة للرئيسية
+        </button>
+
+        <h2 id="lab-title">اسم المختبر</h2>
+
+        <div class="lab-actions">
+          <button class="btn-open" onclick="openSimulatorInNewTab()">
+            <i class="fas fa-up-right-from-square"></i>
+            فتح في نافذة جديدة
+          </button>
+
+          <button class="btn-reload" onclick="reloadSimulator()">
+            <i class="fas fa-sync-alt"></i>
+            إعادة تحميل
+          </button>
+        </div>
+      </div>
+
+      <div class="lab-grid">
+
+        <!-- قسم الفيديوهات بدل الشات -->
+        <aside class="lessons-panel">
+          <div class="lessons-header">
+            <h3><i class="fas fa-circle-play"></i> فيديوهات الشرح</h3>
+            <p class="lessons-subtitle">
+              اختر درسًا من القائمة وسيظهر هنا.
+            </p>
+          </div>
+
+          <!-- مشغل الفيديو -->
+          <div class="video-card">
+            <div class="video-wrapper" id="video-wrapper">
+
+              <!-- فيديو محلي -->
+              <video
+                id="lesson-video"
+                class="hidden"
+                controls
+                preload="metadata"
+                playsinline
+              ></video>
+
+              <!-- فيديو Embed -->
+              <iframe
+                id="lesson-embed"
+                class="hidden"
+                title="مشغل فيديو الدرس"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+
+              <!-- حالة فارغة -->
+              <div id="video-placeholder" class="video-placeholder">
+                <div class="video-placeholder-icon">
+                  <i class="fas fa-video"></i>
+                </div>
+                <h4>هنا ستظهر فيديوهات الشرح</h4>
+                <p>
+                  افتح أي مختبر، ثم اختر درسًا من القائمة.
+                  ويمكنك تعديل روابط الفيديو بسهولة من ملف
+                  <strong>script.js</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div class="lesson-details">
+              <span id="lesson-badge" class="lesson-badge">الدرس</span>
+              <h4 id="lesson-title-text">لم يتم اختيار درس بعد</h4>
+              <p id="lesson-description">
+                اختر أحد الدروس من القائمة الجانبية لبدء العرض.
+              </p>
+            </div>
+          </div>
+
+          <!-- قائمة الدروس -->
+          <div class="lesson-list-card">
+            <div class="lesson-list-head">
+              <h4>قائمة الدروس</h4>
+              <span id="lesson-count">0 دروس</span>
+            </div>
+
+            <div id="lesson-list" class="lesson-list">
+              <!-- يتم ملؤها من JS -->
+            </div>
+          </div>
+        </aside>
+
+        <!-- المحاكي -->
+        <div class="sim-frame">
+          <div class="loader" id="sim-loader">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>جاري تحميل المختبر...</span>
+          </div>
+
+          <!-- Scratch -->
+          <div id="scratch-frame" class="frame hidden">
+            <iframe
+              loading="lazy"
+              data-src="https://turbowarp.org/legacy/embed/?project=00000000"
+              title="Scratch Simulator"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              allow="fullscreen"
+            ></iframe>
+          </div>
+
+          <!-- Arduino -->
+          <div id="arduino-frame" class="frame hidden">
+            <iframe
+              loading="lazy"
+              data-src="https://wokwi.com/projects/new/arduino-uno"
+              title="Arduino Simulator"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              allow="fullscreen"
+            ></iframe>
+          </div>
+
+          <!-- WeDo -->
+          <div id="wedo-frame" class="frame hidden">
+            <iframe
+              loading="lazy"
+              data-src="https://lab.open-roberta.org/#loadSystem=wedo"
+              title="WeDo 2.0"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              allow="fullscreen"
+            ></iframe>
+          </div>
+
+          <!-- GearS -->
+          <div id="gears-frame" class="frame hidden">
+            <iframe
+              loading="lazy"
+              data-src="https://gears.aposteriori.com.sg/"
+              title="GearS Simulator"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              allow="fullscreen"
+            ></iframe>
+          </div>
+
+          <!-- Advanced -->
+          <div id="advanced-frame" class="frame hidden">
+            <iframe
+              loading="lazy"
+              data-src="https://rocksi.net"
+              title="Industrial Robot Simulator"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              allow="fullscreen"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2026 أكاديمية RoboTech - تعليم الروبوتات بطريقة ممتعة وآمنة</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

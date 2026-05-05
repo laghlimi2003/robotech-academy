@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "أكاديمية RoboTech"
+version = "1.0.0"
+id = "artifacts/robotech"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20681
+
+[services.development]
+run = "pnpm --filter @workspace/robotech run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/robotech", "run", "build" ]
+publicDir = "artifacts/robotech/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20681"
+BASE_PATH = "/"
