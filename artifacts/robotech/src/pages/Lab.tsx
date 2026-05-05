@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { labConfigs, Lesson } from "../data/labs";
+import { labConfigs } from "../data/labs";
+import { useProgress } from "../hooks/useProgress";
+import ProgressRing from "../components/ProgressRing";
+import BadgeToast from "../components/BadgeToast";
+import Confetti from "../components/Confetti";
 
 interface LabProps {
   labKey: string;
@@ -8,259 +12,249 @@ interface LabProps {
 
 export default function Lab({ labKey, onGoHome }: LabProps) {
   const config = labConfigs[labKey];
-
-  const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [simulatorLoaded, setSimulatorLoaded] = useState(false);
-  const [doneTasks, setDoneTasks] = useState<Set<number>>(new Set());
+  const [lessonIdx, setLessonIdx] = useState(0);
+  const [simLoading, setSimLoading] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [toast, setToast] = useState({ visible: false, msg: "" });
+  const [prevTaskCount, setPrevTaskCount] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const embedRef = useRef<HTMLIFrameElement>(null);
-  const simIframeRef = useRef<HTMLIFrameElement>(null);
+  const simRef   = useRef<HTMLIFrameElement>(null);
 
-  const currentLesson: Lesson | undefined = config?.lessons[currentLessonIndex];
+  const { doneTasks, completedLessons, taskPercent, lessonPercent, overallPercent,
+          isAllTasksDone, toggleTask, markLesson } = useProgress(
+    labKey, config?.heroTasks.length ?? 0, config?.lessons.length ?? 0
+  );
 
-  const hasVideo = !!(currentLesson?.src && currentLesson.src.trim() !== "");
-  const isEmbed = currentLesson?.type === "embed";
-  const isVideo = currentLesson?.type === "video";
+  const lesson = config?.lessons[lessonIdx];
+  const hasMedia = !!(lesson?.src && lesson.src.trim() !== "");
+  const isEmbed  = lesson?.type === "embed";
+  const isVideo  = lesson?.type === "video";
 
   const pauseMedia = useCallback(() => {
-    if (videoRef.current) {
-      try { videoRef.current.pause(); } catch (_) {}
-      videoRef.current.removeAttribute("src");
-      videoRef.current.load();
-    }
-    if (embedRef.current) {
-      embedRef.current.src = "";
-    }
+    try { videoRef.current?.pause(); } catch (_) {}
+    if (videoRef.current) { videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    if (embedRef.current) embedRef.current.src = "";
   }, []);
 
-  const loadLesson = useCallback((index: number) => {
+  const applyLesson = useCallback((idx: number) => {
     pauseMedia();
-    setCurrentLessonIndex(index);
-
-    const lesson = config?.lessons[index];
-    if (!lesson) return;
-
+    const l = config?.lessons[idx];
+    if (!l) return;
     setTimeout(() => {
-      if (lesson.type === "video" && lesson.src && videoRef.current) {
-        videoRef.current.src = lesson.src;
-      }
-      if (lesson.type === "embed" && lesson.src && embedRef.current) {
-        embedRef.current.src = lesson.src;
-      }
-    }, 50);
+      if (l.type === "video" && l.src && videoRef.current) videoRef.current.src = l.src;
+      if (l.type === "embed" && l.src && embedRef.current) embedRef.current.src = l.src;
+    }, 60);
   }, [config, pauseMedia]);
 
-  const handleGoHome = useCallback(() => {
+  useEffect(() => {
+    setSimLoading(true);
+    setLessonIdx(0);
     pauseMedia();
-    if (simIframeRef.current) {
-      simIframeRef.current.src = "";
-    }
-    onGoHome();
-  }, [pauseMedia, onGoHome]);
+    applyLesson(0);
+    if (simRef.current && config?.simulatorUrl) simRef.current.src = config.simulatorUrl;
+  }, [labKey]);
 
   useEffect(() => {
-    setLoading(true);
-    setSimulatorLoaded(false);
-    setDoneTasks(new Set());
-    setCurrentLessonIndex(0);
+    const newCount = doneTasks.length;
+    if (newCount > prevTaskCount) {
+      if (isAllTasksDone && newCount >= (config?.heroTasks.length ?? 0)) {
+        setShowConfetti(true);
+        setToast({ visible: true, msg: "أنجزت جميع مهام البطل! أنت خارق 🎉" });
+      } else {
+        setToast({ visible: true, msg: `تم إنجاز المهمة رقم ${newCount} — رائع! ⭐` });
+      }
+    }
+    setPrevTaskCount(newCount);
+  }, [doneTasks.length]);
+
+  const selectLesson = (idx: number) => {
+    setLessonIdx(idx);
+    applyLesson(idx);
+    markLesson(idx);
+  };
+
+  const handleGoHome = () => {
     pauseMedia();
-
-    const lesson = config?.lessons[0];
-    if (lesson?.type === "video" && lesson.src && videoRef.current) {
-      videoRef.current.src = lesson.src;
-    }
-    if (lesson?.type === "embed" && lesson.src && embedRef.current) {
-      embedRef.current.src = lesson.src;
-    }
-
-    if (simIframeRef.current && config?.simulatorUrl) {
-      simIframeRef.current.src = config.simulatorUrl;
-    }
-  }, [labKey, config, pauseMedia]);
-
-  const reloadSimulator = () => {
-    if (simIframeRef.current && config?.simulatorUrl) {
-      setLoading(true);
-      setSimulatorLoaded(false);
-      simIframeRef.current.src = config.simulatorUrl;
-    }
+    if (simRef.current) simRef.current.src = "";
+    onGoHome();
   };
 
-  const handleSimLoad = () => {
-    setLoading(false);
-    setSimulatorLoaded(true);
-  };
-
-  const toggleTask = (idx: number) => {
-    setDoneTasks((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
+  const reloadSim = () => {
+    if (simRef.current && config?.simulatorUrl) {
+      setSimLoading(true);
+      simRef.current.src = config.simulatorUrl;
+    }
   };
 
   if (!config) return null;
 
   return (
-    <div className="lab-overlay">
-      <div className="lab-container">
-        <div className="lab-header">
-          <button className="btn-back" onClick={handleGoHome}>
-            <i className="fas fa-arrow-right" />
-            العودة للرئيسية
-          </button>
+    <div className="lab-view">
+      {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
+      <BadgeToast message={toast.msg} visible={toast.visible} onHide={() => setToast(t => ({ ...t, visible: false }))} />
 
-          <h2>{config.title}</h2>
+      {/* ── TOP BAR ── */}
+      <div className="lab-bar">
+        <button className="lb-btn back" onClick={handleGoHome}>
+          <i className="fas fa-arrow-right" />
+          الرئيسية
+        </button>
 
-          <div className="lab-actions">
-            <button
-              className="btn-open"
-              onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
-            >
-              <i className="fas fa-up-right-from-square" />
-              فتح في نافذة جديدة
-            </button>
-            <button className="btn-reload" onClick={reloadSimulator}>
-              <i className="fas fa-sync-alt" />
-              إعادة تحميل
-            </button>
-          </div>
+        <div className="lab-bar-icon" style={{ background: config.gradient }}>
+          <i className={`fas ${config.faIcon}`} />
         </div>
+        <span className="lab-bar-title">{config.title}</span>
 
-        <div className="lab-grid">
-          {/* ===== SIDE PANEL ===== */}
-          <aside className="lessons-panel">
-            <div className="lessons-header">
-              <h3><i className="fas fa-circle-play" /> فيديوهات الشرح</h3>
-              <p className="lessons-subtitle">اختر درسًا من القائمة وسيظهر هنا.</p>
+        <div className="lab-bar-actions">
+          <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700 }}>
+            <i className="fas fa-chart-pie" style={{ marginLeft: 5, color: config.color }} />
+            {overallPercent}% مكتمل
+          </span>
+          <button className="lb-btn reload" onClick={reloadSim}>
+            <i className="fas fa-sync-alt" />
+            إعادة تحميل
+          </button>
+          <button className="lb-btn open" onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}>
+            <i className="fas fa-up-right-from-square" />
+            فتح منفصلاً
+          </button>
+        </div>
+      </div>
+
+      {/* ── BODY ── */}
+      <div className="lab-body">
+
+        {/* ════ SIDE PANEL ════ */}
+        <aside className="lab-side">
+
+          {/* Progress Rings */}
+          <div className="progress-panel">
+            <h4><i className="fas fa-chart-pie" /> تقدمك في المختبر</h4>
+            <div className="progress-rings">
+              <ProgressRing percent={lessonPercent} color={config.color} label="الدروس" />
+              <ProgressRing percent={taskPercent}   color="#43e97b"     label="المهام" />
+              <ProgressRing percent={overallPercent} color="#f7971e"    label="الإجمالي" />
             </div>
+          </div>
 
-            {/* Video Player */}
-            <div className="video-card">
-              <div className="video-wrapper">
-                {/* Local video */}
-                <video
-                  ref={videoRef}
-                  style={{ display: hasVideo && isVideo ? "block" : "none" }}
-                  controls
-                  preload="metadata"
-                  playsInline
-                />
-
-                {/* Embed */}
-                <iframe
-                  ref={embedRef}
-                  style={{ display: hasVideo && isEmbed ? "block" : "none" }}
-                  title="مشغل فيديو الدرس"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-
-                {/* Placeholder */}
-                {!hasVideo && (
-                  <div className="video-placeholder">
-                    <div className="video-placeholder-icon">🎬</div>
-                    <h4>هنا ستظهر فيديوهات الشرح</h4>
-                    <p>
-                      اختر درسًا من القائمة. يمكنك تعديل روابط الفيديو من ملف{" "}
-                      <strong>labs.ts</strong>.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="lesson-details">
-                <span className="lesson-badge">
-                  الدرس {currentLessonIndex + 1}
-                </span>
-                <h4>{currentLesson?.title ?? "لم يتم اختيار درس"}</h4>
-                <p>
-                  {currentLesson?.description ??
-                    "اختر أحد الدروس من القائمة الجانبية لبدء العرض."}
-                </p>
-              </div>
-            </div>
-
-            {/* Lesson List */}
-            <div className="lesson-list-card">
-              <div className="lesson-list-head">
-                <h4>قائمة الدروس</h4>
-                <span>
-                  {config.lessons.length}{" "}
-                  {config.lessons.length === 1 ? "درس" : "دروس"}
-                </span>
-              </div>
-
-              <div className="lesson-list-scroll">
-                {config.lessons.length === 0 ? (
-                  <div className="lesson-empty">
-                    لا توجد دروس بعد. أضف الدروس من ملف{" "}
-                    <strong>labs.ts</strong>.
-                  </div>
-                ) : (
-                  config.lessons.map((lesson, idx) => (
-                    <button
-                      key={idx}
-                      className={`lesson-item${idx === currentLessonIndex ? " active" : ""}`}
-                      onClick={() => loadLesson(idx)}
-                    >
-                      <div className="lesson-item-top">
-                        <span className="lesson-name">{lesson.title}</span>
-                        <span className="lesson-index">{idx + 1}</span>
-                      </div>
-                      <div className="lesson-meta">
-                        <span className="lesson-type-badge">
-                          {lesson.type === "embed" ? "Embed" : "Video"}
-                        </span>
-                        <span>{lesson.duration || "—"}</span>
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Hero Tasks */}
-            <div className="tasks-panel">
-              <h4>🏆 قائمة مهام البطل</h4>
-              {config.heroTasks.map((task, idx) => (
-                <div
-                  key={idx}
-                  className="task-item"
-                  onClick={() => toggleTask(idx)}
-                >
-                  <div className={`task-check${doneTasks.has(idx) ? " done" : ""}`}>
-                    {doneTasks.has(idx) && "✓"}
-                  </div>
-                  <span className={`task-label${doneTasks.has(idx) ? " done" : ""}`}>
-                    {task}
-                  </span>
+          {/* Video Player */}
+          <div className="video-panel">
+            <div className="video-stage">
+              <video
+                ref={videoRef}
+                style={{ display: hasMedia && isVideo ? "block" : "none" }}
+                controls preload="metadata" playsInline
+              />
+              <iframe
+                ref={embedRef}
+                style={{ display: hasMedia && isEmbed ? "block" : "none" }}
+                title="فيديو الدرس"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              {!hasMedia && (
+                <div className="video-empty">
+                  <div className="video-empty-icon"><i className="fas fa-video" /></div>
+                  <h4>فيديوهات الشرح</h4>
+                  <p>اختر درساً من القائمة أدناه لتشغيل الفيديو.</p>
                 </div>
+              )}
+            </div>
+            <div className="video-info">
+              <div className="video-badge">
+                <i className="fas fa-circle-play" />
+                الدرس {lessonIdx + 1} من {config.lessons.length}
+              </div>
+              <h4>{lesson?.title ?? "اختر درساً"}</h4>
+              <p>{lesson?.description ?? "انقر على أحد الدروس أدناه للبدء."}</p>
+            </div>
+          </div>
+
+          {/* Lesson List */}
+          <div className="lesson-list-panel">
+            <div className="lesson-list-head">
+              <h4><i className="fas fa-list" /> قائمة الدروس</h4>
+              <span>{config.lessons.length} دروس</span>
+            </div>
+            <div className="lesson-scroll">
+              {config.lessons.map((les, idx) => {
+                const isDone = completedLessons.includes(idx);
+                return (
+                  <button
+                    key={idx}
+                    className={`lesson-item${idx === lessonIdx ? " active" : ""}${isDone ? " done" : ""}`}
+                    onClick={() => selectLesson(idx)}
+                  >
+                    <div className="lesson-num">
+                      {isDone ? <i className="fas fa-check" /> : idx + 1}
+                    </div>
+                    <div className="lesson-meta-col">
+                      <span className="lesson-name">{les.title}</span>
+                      <span className="lesson-dur">
+                        <i className="fas fa-clock" style={{ marginLeft: 4 }} />
+                        {les.duration}
+                      </span>
+                    </div>
+                    <span className="lesson-type-pill">{les.type === "embed" ? "Embed" : "Video"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Hero Tasks */}
+          <div className="tasks-panel">
+            <div className="tasks-head">
+              <h4><i className="fas fa-trophy" style={{ color: "#f7971e" }} /> مهام البطل</h4>
+              <span className="tasks-progress-text">{doneTasks.length}/{config.heroTasks.length}</span>
+            </div>
+            {config.heroTasks.map((task, idx) => {
+              const done = doneTasks.includes(idx);
+              return (
+                <div key={idx} className="task-item" onClick={() => toggleTask(idx)}>
+                  <div className={`task-check${done ? " done" : ""}`}>
+                    {done && <i className="fas fa-check" />}
+                  </div>
+                  <span className={`task-label${done ? " done" : ""}`}>{task}</span>
+                  {done && <i className="fas fa-star" style={{ color: "#f7971e", fontSize: 12 }} />}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Skills */}
+          <div className="progress-panel" style={{ padding: "12px 14px" }}>
+            <h4><i className="fas fa-graduation-cap" /> المهارات المكتسبة</h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {config.skills.map((s) => (
+                <span key={s} className="skill-tag" style={{ fontSize: 12 }}>{s}</span>
               ))}
             </div>
-          </aside>
-
-          {/* ===== SIMULATOR ===== */}
-          <div className="sim-frame-wrapper">
-            {loading && !simulatorLoaded && (
-              <div className="sim-loader">
-                <span className="spin">⟳</span>
-                <span>جاري تحميل المختبر...</span>
-              </div>
-            )}
-            <iframe
-              ref={simIframeRef}
-              className="sim-iframe"
-              title={`${config.title} Simulator`}
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
-              allow="fullscreen"
-              onLoad={handleSimLoad}
-            />
           </div>
+
+        </aside>
+
+        {/* ════ SIMULATOR ════ */}
+        <div className="sim-area">
+          {simLoading && (
+            <div className="sim-loader">
+              <div className="loader-spinner" />
+              <div className="loader-text">جاري تحميل المحاكي...</div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{config.title}</div>
+            </div>
+          )}
+          <iframe
+            ref={simRef}
+            className="sim-iframe"
+            title={`${config.title} Simulator`}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals allow-downloads"
+            allow="fullscreen; accelerometer; camera; microphone"
+            onLoad={() => setSimLoading(false)}
+          />
         </div>
+
       </div>
     </div>
   );

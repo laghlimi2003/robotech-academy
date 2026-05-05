@@ -1,107 +1,85 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Home from "./pages/Home";
-import Lab from "./pages/Lab";
+import Lab  from "./pages/Lab";
+import Particles from "./components/Particles";
 
 type View = "home" | "lab";
-
-const STORAGE_KEY_LAB = "robotech_last_lab";
+const LAST_LAB_KEY = "robotech_last_lab_v2";
 
 export default function App() {
-  const [view, setView] = useState<View>("home");
-  const [currentLab, setCurrentLab] = useState<string | null>(null);
-  const [transitioning, setTransitioning] = useState(false);
-  const mainRef = useRef<HTMLDivElement>(null);
+  const [view, setView]        = useState<View>("home");
+  const [labKey, setLabKey]    = useState<string | null>(null);
+  const [fading, setFading]    = useState(false);
 
-  const fadeTransition = (cb: () => void) => {
-    setTransitioning(true);
-    setTimeout(() => {
-      cb();
-      setTransitioning(false);
-    }, 280);
+  const transition = (cb: () => void) => {
+    setFading(true);
+    setTimeout(() => { cb(); setFading(false); }, 320);
   };
 
   const openLab = (key: string) => {
-    fadeTransition(() => {
-      setCurrentLab(key);
+    transition(() => {
+      setLabKey(key);
       setView("lab");
-      localStorage.setItem(STORAGE_KEY_LAB, key);
+      localStorage.setItem(LAST_LAB_KEY, key);
     });
   };
 
   const goHome = () => {
-    fadeTransition(() => {
-      setView("home");
-    });
+    transition(() => setView("home"));
   };
 
   useEffect(() => {
-    const lastLab = localStorage.getItem(STORAGE_KEY_LAB);
-    if (lastLab) openLab(lastLab);
+    const last = localStorage.getItem(LAST_LAB_KEY);
+    if (last) openLab(last);
   }, []);
 
   return (
     <>
-      {/* Animated Background */}
-      <div className="bg-blobs" aria-hidden="true">
-        <div className="blob blob-1" />
-        <div className="blob blob-2" />
-        <div className="blob blob-3" />
+      {/* Animated particle canvas */}
+      <Particles />
+
+      {/* Dark background layers */}
+      <div className="bg-scene" aria-hidden="true">
+        <div className="bg-gradient" />
+        <div className="bg-grid" />
       </div>
 
-      {/* Page Transition Overlay */}
-      {transitioning && <div className="page-transition-overlay" />}
+      {/* Page-transition overlay */}
+      {fading && <div className="page-transition" />}
 
-      {/* Header */}
-      <header className="glass-header">
-        <button
-          className="logo-btn"
-          onClick={goHome}
-          aria-label="العودة إلى الصفحة الرئيسية"
-        >
-          <i className="fas fa-robot" style={{ fontSize: 26 }} />
-          <span>RoboTech</span>
-        </button>
+      {/* ── HEADER (only on home) ── */}
+      {view === "home" && (
+        <header className="site-header">
+          <button className="logo-btn" onClick={goHome} aria-label="الرئيسية">
+            <div className="logo-icon">🤖</div>
+            <span className="logo-text">RoboTech</span>
+          </button>
 
-        <nav>
-          <ul className="nav-links">
-            <li>
-              <a href="#" onClick={(e) => { e.preventDefault(); goHome(); }}>
-                <i className="fas fa-home" style={{ marginLeft: 5 }} />
-                الرئيسية
-              </a>
-            </li>
-            <li>
-              <a href="#labs-section" onClick={(e) => { if (view === "lab") { e.preventDefault(); goHome(); } }}>
-                <i className="fas fa-flask" style={{ marginLeft: 5 }} />
-                المختبرات
-              </a>
-            </li>
-            <li>
-              <a href="#">
-                <i className="fas fa-book-open" style={{ marginLeft: 5 }} />
-                دروسي
-              </a>
-            </li>
-            <li>
-              <a href="#">
-                <i className="fas fa-info-circle" style={{ marginLeft: 5 }} />
-                عن الأكاديمية
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </header>
+          <nav>
+            <ul className="nav-links">
+              <li>
+                <a href="#" className="active" onClick={(e) => { e.preventDefault(); goHome(); }}>
+                  <i className="fas fa-home" /> الرئيسية
+                </a>
+              </li>
+              <li>
+                <a href="#labs" onClick={(e) => { e.preventDefault(); document.getElementById("labs")?.scrollIntoView({ behavior: "smooth" }); }}>
+                  <i className="fas fa-flask" /> المختبرات
+                </a>
+              </li>
+              <li>
+                <a href="#how" onClick={(e) => { e.preventDefault(); document.getElementById("how")?.scrollIntoView({ behavior: "smooth" }); }}>
+                  <i className="fas fa-question-circle" /> كيف نعمل؟
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </header>
+      )}
 
-      {/* Views */}
-      <div
-        ref={mainRef}
-        className={transitioning ? "view-fade-out" : "view-fade-in"}
-      >
-        {view === "home" && <Home onOpenLab={openLab} />}
-        {view === "lab" && currentLab && (
-          <Lab labKey={currentLab} onGoHome={goHome} />
-        )}
-      </div>
+      {/* ── VIEWS ── */}
+      {view === "home" && <Home onOpenLab={openLab} />}
+      {view === "lab"  && labKey && <Lab labKey={labKey} onGoHome={goHome} />}
     </>
   );
 }
