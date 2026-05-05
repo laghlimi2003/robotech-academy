@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { labsList, difficultyColors, type Difficulty } from "../data/labs";
 import { getLabOverallProgress } from "../hooks/useProgress";
+import type { User } from "../hooks/useAuth";
 
 interface HomeProps {
   onOpenLab: (key: string) => void;
+  user: User;
+  theme: "dark" | "light";
 }
 
 type Filter = "all" | Difficulty;
@@ -22,7 +25,7 @@ const howSteps = [
   { num: "٤", icon: "fa-trophy",       title: "أنجز المهام",     desc: "اكمل قائمة البطل واحصد إنجازاتك" },
 ];
 
-export default function Home({ onOpenLab }: HomeProps) {
+export default function Home({ onOpenLab, user, theme }: HomeProps) {
   const [filter, setFilter] = useState<Filter>("all");
   const [progMap, setProgMap] = useState<Record<string, number>>({});
 
@@ -48,8 +51,8 @@ export default function Home({ onOpenLab }: HomeProps) {
               أكاديمية RoboTech — منصة تعليم الروبوتيك للأطفال
             </div>
             <h1 className="hero-title">
-              مرحباً يا بطل&nbsp;<br />
-              <span>المستقبل! 🚀</span>
+              أهلاً {user.avatar} {user.name}!&nbsp;<br />
+              <span>استعد للمغامرة 🚀</span>
             </h1>
             <p className="hero-subtitle">
               اكتشف عالم الروبوتات والبرمجة عبر مختبرات تفاعلية مدهشة، فيديوهات احترافية،
@@ -97,7 +100,7 @@ export default function Home({ onOpenLab }: HomeProps) {
                     className={`filter-btn${filter === f ? " active" : ""}`}
                     onClick={() => setFilter(f)}
                   >
-                    {f === "all" ? "الكل" : f === "beginner" ? "مبتدئ" : f === "intermediate" ? "متوسط" : "متقدم"}
+                    {f === "all" ? "🌟 الكل" : f === "beginner" ? "🟢 مبتدئ" : f === "intermediate" ? "🟡 متوسط" : "🔴 متقدم"}
                   </button>
                 ))}
               </div>
@@ -168,6 +171,10 @@ export default function Home({ onOpenLab }: HomeProps) {
                         <div className="card-progress-fill" style={{ width: `${prog}%`, background: lab.gradient }} />
                       </div>
                     )}
+
+                    <div className="card-enter-btn" style={{ background: lab.gradient }}>
+                      <i className="fas fa-play" /> ادخل المختبر
+                    </div>
                   </article>
                 );
               })}

@@ -8,15 +8,19 @@ import Confetti from "../components/Confetti";
 interface LabProps {
   labKey: string;
   onGoHome: () => void;
+  theme: "dark" | "light";
+  toggleTheme: () => void;
 }
 
-export default function Lab({ labKey, onGoHome }: LabProps) {
+export default function Lab({ labKey, onGoHome, theme, toggleTheme }: LabProps) {
   const config = labConfigs[labKey];
-  const [lessonIdx, setLessonIdx] = useState(0);
-  const [simLoading, setSimLoading] = useState(true);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [toast, setToast] = useState({ visible: false, msg: "" });
-  const [prevTaskCount, setPrevTaskCount] = useState(0);
+
+  const [lessonIdx, setLessonIdx]     = useState(0);
+  const [simReady, setSimReady]       = useState(false);   // user clicked Launch
+  const [simLoaded, setSimLoaded]     = useState(false);   // iframe onLoad fired
+  const [showConfetti, setShowCon]    = useState(false);
+  const [toast, setToast]             = useState({ visible: false, msg: "" });
+  const [prevCount, setPrevCount]     = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const embedRef = useRef<HTMLIFrameElement>(null);
@@ -27,46 +31,51 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
     labKey, config?.heroTasks.length ?? 0, config?.lessons.length ?? 0
   );
 
-  const lesson = config?.lessons[lessonIdx];
-  const hasMedia = !!(lesson?.src && lesson.src.trim() !== "");
+  const lesson   = config?.lessons[lessonIdx];
+  const hasMedia = !!(lesson?.src?.trim());
   const isEmbed  = lesson?.type === "embed";
   const isVideo  = lesson?.type === "video";
 
+  /* ── clear media ── */
   const pauseMedia = useCallback(() => {
     try { videoRef.current?.pause(); } catch (_) {}
     if (videoRef.current) { videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     if (embedRef.current) embedRef.current.src = "";
   }, []);
 
+  /* ── apply lesson ── */
   const applyLesson = useCallback((idx: number) => {
     pauseMedia();
     const l = config?.lessons[idx];
     if (!l) return;
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       if (l.type === "video" && l.src && videoRef.current) videoRef.current.src = l.src;
       if (l.type === "embed" && l.src && embedRef.current) embedRef.current.src = l.src;
-    }, 60);
+    });
   }, [config, pauseMedia]);
 
+  /* ── on lab change ── */
   useEffect(() => {
-    setSimLoading(true);
+    setSimReady(false);
+    setSimLoaded(false);
     setLessonIdx(0);
     pauseMedia();
     applyLesson(0);
-    if (simRef.current && config?.simulatorUrl) simRef.current.src = config.simulatorUrl;
+    if (simRef.current) simRef.current.src = "";
+    setPrevCount(doneTasks.length);
   }, [labKey]);
 
+  /* ── task toast ── */
   useEffect(() => {
-    const newCount = doneTasks.length;
-    if (newCount > prevTaskCount) {
-      if (isAllTasksDone && newCount >= (config?.heroTasks.length ?? 0)) {
-        setShowConfetti(true);
+    if (doneTasks.length > prevCount) {
+      if (isAllTasksDone) {
+        setShowCon(true);
         setToast({ visible: true, msg: "أنجزت جميع مهام البطل! أنت خارق 🎉" });
       } else {
-        setToast({ visible: true, msg: `تم إنجاز المهمة رقم ${newCount} — رائع! ⭐` });
+        setToast({ visible: true, msg: `تم إنجاز المهمة ${doneTasks.length} — رائع! ⭐` });
       }
     }
-    setPrevTaskCount(newCount);
+    setPrevCount(doneTasks.length);
   }, [doneTasks.length]);
 
   const selectLesson = (idx: number) => {
@@ -75,31 +84,42 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
     markLesson(idx);
   };
 
+  const launchSim = () => {
+    setSimReady(true);
+    setSimLoaded(false);
+    if (simRef.current && config?.simulatorUrl) {
+      simRef.current.src = config.simulatorUrl;
+    }
+  };
+
+  const reloadSim = () => {
+    setSimLoaded(false);
+    if (simRef.current && config?.simulatorUrl) {
+      simRef.current.src = config.simulatorUrl;
+    }
+  };
+
   const handleGoHome = () => {
     pauseMedia();
     if (simRef.current) simRef.current.src = "";
     onGoHome();
   };
 
-  const reloadSim = () => {
-    if (simRef.current && config?.simulatorUrl) {
-      setSimLoading(true);
-      simRef.current.src = config.simulatorUrl;
-    }
-  };
-
   if (!config) return null;
 
   return (
-    <div className="lab-view">
-      {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
-      <BadgeToast message={toast.msg} visible={toast.visible} onHide={() => setToast(t => ({ ...t, visible: false }))} />
+    <div className="lab-view" data-theme={theme}>
+      {showConfetti && <Confetti onDone={() => setShowCon(false)} />}
+      <BadgeToast
+        message={toast.msg}
+        visible={toast.visible}
+        onHide={() => setToast(t => ({ ...t, visible: false }))}
+      />
 
-      {/* ── TOP BAR ── */}
+      {/* ══ TOP BAR ══ */}
       <div className="lab-bar">
         <button className="lb-btn back" onClick={handleGoHome}>
-          <i className="fas fa-arrow-right" />
-          الرئيسية
+          <i className="fas fa-arrow-right" /> الرئيسية
         </button>
 
         <div className="lab-bar-icon" style={{ background: config.gradient }}>
@@ -108,34 +128,40 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
         <span className="lab-bar-title">{config.title}</span>
 
         <div className="lab-bar-actions">
-          <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700 }}>
-            <i className="fas fa-chart-pie" style={{ marginLeft: 5, color: config.color }} />
-            {overallPercent}% مكتمل
+          <span className="lab-overall-badge" style={{ color: config.color }}>
+            <i className="fas fa-chart-pie" /> {overallPercent}%
           </span>
-          <button className="lb-btn reload" onClick={reloadSim}>
-            <i className="fas fa-sync-alt" />
-            إعادة تحميل
+
+          <button className="theme-toggle" onClick={toggleTheme}>
+            {theme === "dark"
+              ? <><i className="fas fa-sun" /> فاتح</>
+              : <><i className="fas fa-moon" /> داكن</>}
           </button>
+
+          {simReady && (
+            <button className="lb-btn reload" onClick={reloadSim}>
+              <i className="fas fa-sync-alt" /> إعادة تحميل
+            </button>
+          )}
           <button className="lb-btn open" onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}>
-            <i className="fas fa-up-right-from-square" />
-            فتح منفصلاً
+            <i className="fas fa-up-right-from-square" /> فتح منفصلاً
           </button>
         </div>
       </div>
 
-      {/* ── BODY ── */}
+      {/* ══ BODY ══ */}
       <div className="lab-body">
 
-        {/* ════ SIDE PANEL ════ */}
+        {/* ── SIDE PANEL ── */}
         <aside className="lab-side">
 
-          {/* Progress Rings */}
+          {/* Progress */}
           <div className="progress-panel">
             <h4><i className="fas fa-chart-pie" /> تقدمك في المختبر</h4>
             <div className="progress-rings">
-              <ProgressRing percent={lessonPercent} color={config.color} label="الدروس" />
-              <ProgressRing percent={taskPercent}   color="#43e97b"     label="المهام" />
-              <ProgressRing percent={overallPercent} color="#f7971e"    label="الإجمالي" />
+              <ProgressRing percent={lessonPercent}  color={config.color} label="الدروس" />
+              <ProgressRing percent={taskPercent}    color="#43e97b"      label="المهام" />
+              <ProgressRing percent={overallPercent} color="#f7971e"      label="الإجمالي" />
             </div>
           </div>
 
@@ -193,8 +219,7 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
                     <div className="lesson-meta-col">
                       <span className="lesson-name">{les.title}</span>
                       <span className="lesson-dur">
-                        <i className="fas fa-clock" style={{ marginLeft: 4 }} />
-                        {les.duration}
+                        <i className="fas fa-clock" style={{ marginLeft: 4 }} />{les.duration}
                       </span>
                     </div>
                     <span className="lesson-type-pill">{les.type === "embed" ? "Embed" : "Video"}</span>
@@ -236,22 +261,56 @@ export default function Lab({ labKey, onGoHome }: LabProps) {
 
         </aside>
 
-        {/* ════ SIMULATOR ════ */}
+        {/* ══ SIMULATOR AREA ══ */}
         <div className="sim-area">
-          {simLoading && (
-            <div className="sim-loader">
-              <div className="loader-spinner" />
-              <div className="loader-text">جاري تحميل المحاكي...</div>
-              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{config.title}</div>
+
+          {/* LAUNCH SCREEN — shown before user clicks */}
+          {!simReady && (
+            <div className="sim-launch">
+              <div className="sim-launch-icon" style={{ background: config.gradient }}>
+                <i className={`fas ${config.faIcon}`} />
+              </div>
+              <h2 className="sim-launch-title">{config.title}</h2>
+              <p className="sim-launch-desc">
+                انقر على الزر أدناه لتحميل المحاكي التفاعلي
+              </p>
+              <div className="sim-launch-meta">
+                <span><i className="fas fa-child" /> {config.ageRange} سنة</span>
+                <span><i className="fas fa-signal" /> {config.difficultyLabel}</span>
+                <span><i className="fas fa-star" /> {config.tag}</span>
+              </div>
+              <button className="sim-launch-btn" onClick={launchSim} style={{ background: config.gradient }}>
+                <i className="fas fa-play" />
+                تشغيل المحاكي
+              </button>
+              <button
+                className="sim-launch-ext"
+                onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
+              >
+                <i className="fas fa-up-right-from-square" />
+                فتح في نافذة جديدة (أسرع)
+              </button>
             </div>
           )}
+
+          {/* Loading spinner — shown while iframe loads */}
+          {simReady && !simLoaded && (
+            <div className="sim-loader">
+              <div className="loader-spinner" style={{ borderTopColor: config.color }} />
+              <div className="loader-text">جاري تحميل {config.title}...</div>
+              <div className="loader-hint">قد يستغرق بعض الوقت — يُحمَّل مرة واحدة فقط</div>
+            </div>
+          )}
+
+          {/* The actual iframe */}
           <iframe
             ref={simRef}
             className="sim-iframe"
+            style={{ display: simReady ? "block" : "none" }}
             title={`${config.title} Simulator`}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals allow-downloads"
-            allow="fullscreen; accelerometer; camera; microphone"
-            onLoad={() => setSimLoading(false)}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals allow-downloads allow-pointer-lock"
+            allow="fullscreen; accelerometer; camera; microphone; clipboard-write"
+            onLoad={() => { if (simReady) setSimLoaded(true); }}
           />
         </div>
 

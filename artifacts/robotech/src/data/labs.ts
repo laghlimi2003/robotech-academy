@@ -43,8 +43,9 @@ export const labConfigs: Record<string, LabConfig> = {
     gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     glowColor: "rgba(79,172,254,0.5)",
     tag: "🎮 الأكثر شعبية",
-    simulatorUrl: "https://turbowarp.org/editor",
-    externalUrl: "https://turbowarp.org/editor",
+    // Snap! works reliably in iframes (MIT-licensed Scratch alternative)
+    simulatorUrl: "https://snap.berkeley.edu/snap/snap.html",
+    externalUrl: "https://scratch.mit.edu/",
     lessons: [
       { title: "مقدمة في سكراتش", description: "تعرف على واجهة سكراتش وكتل البرمجة الأساسية.", type: "video", src: "videos/scratch-intro.mp4", duration: "05:30" },
       { title: "إنشاء أول مشروع", description: "أنشئ شخصيتك الأولى وحركها على المسرح.", type: "video", src: "videos/scratch-project.mp4", duration: "08:15" },
@@ -52,7 +53,7 @@ export const labConfigs: Record<string, LabConfig> = {
       { title: "الأحداث والتفاعل", description: "اجعل مشروعك يستجيب لضغطات لوحة المفاتيح.", type: "video", src: "videos/scratch-events.mp4", duration: "06:20" },
       { title: "مشروع لعبة كاملة", description: "ابنِ لعبة مكتملة من الصفر خطوة بخطوة.", type: "embed", src: "", duration: "15:00" },
     ],
-    heroTasks: ["افتح محرر سكراتش", "أضف شخصية جديدة", "حرّك الشخصية بالسهام", "أضف صوتاً للمشروع", "أنشئ خلفية ملونة", "احفظ وشارك مشروعك"],
+    heroTasks: ["افتح محرر Snap!", "أضف شخصية جديدة", "حرّك الشخصية بالسهام", "أضف صوتاً للمشروع", "أنشئ خلفية ملونة", "احفظ وشارك مشروعك"],
     skills: ["تفكير منطقي", "حل المشكلات", "إبداع", "تسلسل الأوامر"],
   },
 
@@ -156,7 +157,7 @@ export const labConfigs: Record<string, LabConfig> = {
   tinkercad: {
     key: "tinkercad",
     title: "Tinkercad المتطور",
-    subtitle: "تصميم ثلاثي الأبعاد + دوائر كهربائية",
+    subtitle: "تصميم ثلاثي الأبعاد + دوائر",
     description: "صمّم نماذج ثلاثية الأبعاد للطباعة وشبّك دوائر إلكترونية احترافية في بيئة واحدة.",
     difficulty: "intermediate",
     difficultyLabel: "متوسط",
@@ -227,7 +228,6 @@ export const labConfigs: Record<string, LabConfig> = {
 };
 
 export const labsList = Object.values(labConfigs);
-
 export const difficultyColors: Record<Difficulty, string> = {
   beginner: "#43e97b",
   intermediate: "#f7971e",
