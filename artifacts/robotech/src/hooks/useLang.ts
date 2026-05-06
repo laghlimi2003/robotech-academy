@@ -80,6 +80,7 @@ export const translations = {
     lessonsCount: "دروس",
     footer: "© 2025 أكاديمية RoboTech — تعليم الروبوتيك للجيل القادم بطريقة ممتعة وآمنة",
     langLabel: "اللغة",
+    dashboard: "تقدمي",
   },
   en: {
     dir: "ltr",
@@ -149,6 +150,7 @@ export const translations = {
     lessonsCount: "lessons",
     footer: "© 2025 RoboTech Academy — Robotics education for the next generation",
     langLabel: "Language",
+    dashboard: "My Progress",
   },
   fr: {
     dir: "ltr",
@@ -218,6 +220,7 @@ export const translations = {
     lessonsCount: "leçons",
     footer: "© 2025 Académie RoboTech — Éducation robotique pour la prochaine génération",
     langLabel: "Langue",
+    dashboard: "Ma Progression",
   },
 } as const;
 

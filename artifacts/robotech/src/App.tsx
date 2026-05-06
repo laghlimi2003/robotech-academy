@@ -2,12 +2,13 @@ import { useState } from "react";
 import Home from "./pages/Home";
 import Lab  from "./pages/Lab";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import Particles from "./components/Particles";
 import { useAuth } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
 
-type View = "home" | "lab";
+type View = "home" | "lab" | "dashboard";
 const LAST_LAB_KEY = "robotech_last_lab_v2";
 
 const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr: "🇫🇷" };
@@ -35,7 +36,8 @@ export default function App() {
     });
   };
 
-  const goHome = () => transition(() => setView("home"));
+  const goHome      = () => transition(() => setView("home"));
+  const goDashboard = () => transition(() => setView("dashboard"));
 
   /* ── NOT LOGGED IN → show Login ── */
   if (!user) {
@@ -70,8 +72,8 @@ export default function App() {
 
       {fading && <div className="page-transition" />}
 
-      {/* Header — home view only */}
-      {view === "home" && (
+      {/* Header — home and dashboard views */}
+      {(view === "home" || view === "dashboard") && (
         <header className="site-header">
           <button className="logo-btn" onClick={goHome} aria-label={t.home}>
             <div className="logo-icon">🤖</div>
@@ -81,18 +83,18 @@ export default function App() {
           <nav>
             <ul className="nav-links">
               <li>
-                <a href="#" className="active" onClick={(e) => { e.preventDefault(); goHome(); }}>
+                <a href="#" className={view === "home" ? "active" : ""} onClick={(e) => { e.preventDefault(); goHome(); }}>
                   <i className="fas fa-home" /> {t.home}
                 </a>
               </li>
               <li>
-                <a href="#labs" onClick={(e) => { e.preventDefault(); document.getElementById("labs")?.scrollIntoView({ behavior: "smooth" }); }}>
+                <a href="#labs" onClick={(e) => { e.preventDefault(); if (view !== "home") { goHome(); } else { document.getElementById("labs")?.scrollIntoView({ behavior: "smooth" }); } }}>
                   <i className="fas fa-flask" /> {t.labs}
                 </a>
               </li>
               <li>
-                <a href="#how" onClick={(e) => { e.preventDefault(); document.getElementById("how")?.scrollIntoView({ behavior: "smooth" }); }}>
-                  <i className="fas fa-question-circle" /> {t.howWork}
+                <a href="#" className={view === "dashboard" ? "active" : ""} onClick={(e) => { e.preventDefault(); goDashboard(); }}>
+                  <i className="fas fa-chart-bar" /> {t.dashboard}
                 </a>
               </li>
             </ul>
@@ -143,7 +145,8 @@ export default function App() {
         </header>
       )}
 
-      {view === "home" && <Home onOpenLab={openLab} user={user} theme={theme} t={t} lang={lang} />}
+      {view === "home"      && <Home onOpenLab={openLab} user={user} theme={theme} t={t} lang={lang} />}
+      {view === "dashboard" && <Dashboard user={user} t={t} lang={lang} onOpenLab={openLab} />}
       {view === "lab"  && labKey && (
         <Lab
           labKey={labKey}
