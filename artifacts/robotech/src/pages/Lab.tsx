@@ -4,6 +4,7 @@ import { useProgress } from "../hooks/useProgress";
 import ProgressRing from "../components/ProgressRing";
 import BadgeToast from "../components/BadgeToast";
 import Confetti from "../components/Confetti";
+import Quiz from "../components/Quiz";
 import type { T, Lang } from "../hooks/useLang";
 
 interface LabProps {
@@ -30,6 +31,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   const [prevCount, setPrevCount]  = useState(0);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [videoError, setVideoError] = useState<string>("");
+  const [quizOpenFor, setQuizOpenFor] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const embedRef = useRef<HTMLIFrameElement>(null);
@@ -74,10 +76,23 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
     if (idx === lessonIdx) {
       setLessonIdx(-1);
       pauseMedia();
+      setQuizOpenFor(null);
       return;
     }
     setLessonIdx(idx);
+    setQuizOpenFor(null);
+  };
+
+  const handleQuizPass = (idx: number) => {
     markLesson(idx);
+    setQuizOpenFor(null);
+    setShowCon(true);
+    setToast({ visible: true, msg: t.quizPassedMsg });
+  };
+
+  const handleMarkWatched = (idx: number) => {
+    markLesson(idx);
+    setToast({ visible: true, msg: t.quizMarkWatched });
   };
 
   const launchSim = () => {
@@ -269,6 +284,54 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                           )}
                         </div>
                         <p className="lesson-desc">{les.description}</p>
+
+                        {/* ── Quiz / Completion area ── */}
+                        <div className="lesson-actions">
+                          {isDone && quizOpenFor !== idx && (
+                            <div className="lesson-done-badge">
+                              <i className="fas fa-circle-check" /> {t.quizPassed}
+                              {les.quiz && les.quiz.length > 0 && (
+                                <button
+                                  className="quiz-btn ghost small"
+                                  onClick={() => { pauseMedia(); setQuizOpenFor(idx); }}
+                                >
+                                  <i className="fas fa-rotate-right" /> {t.quizRetry}
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {!isDone && quizOpenFor !== idx && (
+                            les.quiz && les.quiz.length > 0 ? (
+                              <button
+                                className="quiz-btn primary"
+                                style={{ background: config.color }}
+                                onClick={() => { pauseMedia(); setQuizOpenFor(idx); }}
+                              >
+                                <i className="fas fa-circle-question" /> {t.quizStart}
+                                <span className="quiz-count">({les.quiz.length})</span>
+                              </button>
+                            ) : (
+                              <button
+                                className="quiz-btn primary"
+                                style={{ background: config.color }}
+                                onClick={() => handleMarkWatched(idx)}
+                              >
+                                <i className="fas fa-check" /> {t.quizMarkWatched}
+                              </button>
+                            )
+                          )}
+
+                          {quizOpenFor === idx && les.quiz && les.quiz.length > 0 && (
+                            <Quiz
+                              questions={les.quiz}
+                              accentColor={config.color}
+                              t={t}
+                              onPass={() => handleQuizPass(idx)}
+                              onClose={() => setQuizOpenFor(null)}
+                            />
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
