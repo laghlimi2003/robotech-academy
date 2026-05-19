@@ -72,7 +72,7 @@ export const labConfigs: Record<string, LabConfig> = {
     simulatorUrl: "https://wokwi.com/projects/new/arduino-uno",
     externalUrl: "https://wokwi.com/projects/new/arduino-uno",
     lessons: [
-      { title: "ما هو الأردوينو؟ (اختبار)", description: "فيديو اختبار من الإنترنت للتأكد من المشغّل.", type: "video", src: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", duration: "06:10" },
+      { title: "ما هو الأردوينو؟ (اختبار)", description: "فيديو اختبار من الإنترنت للتأكد من المشغّل.", type: "video", src: "https://www.w3schools.com/html/mov_bbb.mp4", duration: "06:10" },
       { title: "تشغيل LED", description: "أول مشروع: تشغيل وإطفاء LED بالكود.", type: "video", src: "/videos/arduino-led.mp4", duration: "09:20" },
       { title: "قراءة الحساسات", description: "اقرأ القيم من حساسات الضوء والحرارة.", type: "embed", src: "", duration: "11:00" },
       { title: "التحكم في المحرك", description: "حرّك سيرفو موتور بزوايا محددة.", type: "video", src: "/videos/arduino-motor.mp4", duration: "08:45" },
