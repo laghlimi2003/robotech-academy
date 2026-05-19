@@ -22,7 +22,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   const rawConfig = labConfigs[labKey];
   const config = rawConfig ? localizeLab(rawConfig, lang) : undefined;
 
-  const [lessonIdx, setLessonIdx]  = useState(0);
+  const [lessonIdx, setLessonIdx]  = useState(-1);
   const [simReady, setSimReady]    = useState(false);
   const [simLoaded, setSimLoaded]  = useState(false);
   const [showConfetti, setShowCon] = useState(false);
@@ -47,7 +47,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   useEffect(() => {
     setSimReady(false);
     setSimLoaded(false);
-    setLessonIdx(0);
+    setLessonIdx(-1);
     pauseMedia();
     if (simRef.current) simRef.current.src = "";
     setPrevCount(doneTasks.length);
@@ -71,6 +71,11 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   }, [doneTasks.length]);
 
   const selectLesson = (idx: number) => {
+    if (idx === lessonIdx) {
+      setLessonIdx(-1);
+      pauseMedia();
+      return;
+    }
     setLessonIdx(idx);
     markLesson(idx);
   };
