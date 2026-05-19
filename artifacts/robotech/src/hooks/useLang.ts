@@ -16,9 +16,9 @@ export const translations = {
     logout: "تسجيل الخروج",
     // Hero
     heroBadge: "أكاديمية RoboTech — منصة تعليم الروبوتيك للأطفال",
-    heroTitle1: "أهلاً",
-    heroTitle2: "استعد للمغامرة 🚀",
-    heroSub: "اكتشف عالم الروبوتات والبرمجة عبر مختبرات تفاعلية مدهشة، فيديوهات احترافية، ومحاكيات متطورة — كل هذا مجاناً وباللغة العربية.",
+    heroTitle1: "أهلاً بك",
+    heroTitle2: "استعد لمغامرة الروبوتيك 🚀",
+    heroSub: "اكتشف عالم الروبوتات والبرمجة عبر مختبرات تفاعلية مدهشة، فيديوهات احترافية، ومحاكيات متطورة. كل هذا مجاناً وباللغة العربية.",
     startExplore: "ابدأ الاستكشاف",
     howItWork: "كيف يعمل؟",
     // Stats
@@ -83,6 +83,12 @@ export const translations = {
     footerFollow: "تابعنا",
     langLabel: "اللغة",
     dashboard: "تقدمي",
+    toastAllDone: "أنجزت جميع مهام البطل! أنت خارق 🎉",
+    toastTaskDone: "تم إنجاز المهمة",
+    badgeNew: "إنجاز جديد!",
+    videoErrorTitle: "الفيديو لم يُحمَّل",
+    videoErrorPrefix: "خطأ",
+    videoOpenNewTab: "افتح الفيديو في تبويب جديد ↗",
   },
   en: {
     dir: "ltr",
@@ -93,9 +99,9 @@ export const translations = {
     dark: "Dark",
     logout: "Logout",
     heroBadge: "RoboTech Academy — Robotics Education for Kids",
-    heroTitle1: "Hello",
+    heroTitle1: "Welcome",
     heroTitle2: "Get ready for adventure 🚀",
-    heroSub: "Discover the world of robotics and programming through amazing interactive labs, professional videos, and advanced simulators — all for free!",
+    heroSub: "Discover the world of robotics and programming through amazing interactive labs, professional videos, and advanced simulators. All for free.",
     startExplore: "Start Exploring",
     howItWork: "How it works?",
     stat1: "Interactive Labs",
@@ -155,6 +161,12 @@ export const translations = {
     footerFollow: "Follow us",
     langLabel: "Language",
     dashboard: "My Progress",
+    toastAllDone: "You finished all hero tasks. You're amazing 🎉",
+    toastTaskDone: "Task completed:",
+    badgeNew: "New Achievement!",
+    videoErrorTitle: "Video failed to load",
+    videoErrorPrefix: "Error",
+    videoOpenNewTab: "Open video in new tab ↗",
   },
   fr: {
     dir: "ltr",
@@ -165,9 +177,9 @@ export const translations = {
     dark: "Sombre",
     logout: "Déconnexion",
     heroBadge: "Académie RoboTech — Éducation Robotique pour Enfants",
-    heroTitle1: "Bonjour",
+    heroTitle1: "Bienvenue",
     heroTitle2: "Prêt pour l'aventure 🚀",
-    heroSub: "Découvrez le monde de la robotique et de la programmation à travers des laboratoires interactifs, des vidéos professionnelles et des simulateurs avancés — tout gratuitement!",
+    heroSub: "Découvrez le monde de la robotique et de la programmation à travers des laboratoires interactifs, des vidéos professionnelles et des simulateurs avancés. Tout est gratuit.",
     startExplore: "Commencer l'exploration",
     howItWork: "Comment ça marche?",
     stat1: "Labos Interactifs",
@@ -227,10 +239,16 @@ export const translations = {
     footerFollow: "Suivez-nous",
     langLabel: "Langue",
     dashboard: "Ma Progression",
+    toastAllDone: "Vous avez terminé toutes les tâches héros 🎉",
+    toastTaskDone: "Tâche terminée:",
+    badgeNew: "Nouvelle réalisation !",
+    videoErrorTitle: "Échec du chargement de la vidéo",
+    videoErrorPrefix: "Erreur",
+    videoOpenNewTab: "Ouvrir la vidéo dans un nouvel onglet ↗",
   },
 } as const;
 
-export type T = typeof translations.ar;
+export type T = typeof translations.ar & { dir: "rtl" | "ltr" };
 
 export function useLang() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -244,7 +262,7 @@ export function useLang() {
     document.documentElement.setAttribute("lang", lang);
   }, [lang]);
 
-  const t: T = translations[lang];
+  const t = translations[lang] as unknown as T;
 
   return { lang, setLang, t };
 }

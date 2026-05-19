@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { labConfigs } from "../data/labs";
+import { labConfigs, localizeLab } from "../data/labs";
 import { useProgress } from "../hooks/useProgress";
 import ProgressRing from "../components/ProgressRing";
 import BadgeToast from "../components/BadgeToast";
@@ -19,7 +19,8 @@ interface LabProps {
 const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr: "🇫🇷" };
 
 export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, setLang }: LabProps) {
-  const config = labConfigs[labKey];
+  const rawConfig = labConfigs[labKey];
+  const config = rawConfig ? localizeLab(rawConfig, lang) : undefined;
 
   const [lessonIdx, setLessonIdx]  = useState(0);
   const [simReady, setSimReady]    = useState(false);
@@ -36,7 +37,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   const { doneTasks, completedLessons, taskPercent, lessonPercent, overallPercent,
           isAllTasksDone, toggleTask, markLesson } = useProgress(
-    labKey, config?.heroTasks.length ?? 0, config?.lessons.length ?? 0
+    labKey, rawConfig?.heroTasks.ar.length ?? 0, rawConfig?.lessons.length ?? 0
   );
 
   const lesson   = config?.lessons[lessonIdx];
@@ -75,9 +76,9 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
     if (doneTasks.length > prevCount) {
       if (isAllTasksDone) {
         setShowCon(true);
-        setToast({ visible: true, msg: "أنجزت جميع مهام البطل! أنت خارق 🎉" });
+        setToast({ visible: true, msg: t.toastAllDone });
       } else {
-        setToast({ visible: true, msg: `تم إنجاز المهمة ${doneTasks.length} — رائع! ⭐` });
+        setToast({ visible: true, msg: `${t.toastTaskDone} ${doneTasks.length} ⭐` });
       }
     }
     setPrevCount(doneTasks.length);
@@ -117,7 +118,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
       <BadgeToast
         message={toast.msg}
         visible={toast.visible}
-        onHide={() => setToast(t => ({ ...t, visible: false }))}
+        title={t.badgeNew}
+        onHide={() => setToast(s => ({ ...s, visible: false }))}
       />
 
       {/* ══ TOP BAR ══ */}
@@ -191,7 +193,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                 onError={(e) => {
                   const el = e.currentTarget;
                   if (el.src && el.error) {
-                    setVideoError(`خطأ (${el.error.code}): ${el.currentSrc}`);
+                    setVideoError(`${t.videoErrorPrefix} (${el.error.code}): ${el.currentSrc}`);
                   }
                 }}
                 onLoadedMetadata={() => setVideoError("")}
@@ -202,7 +204,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                   <div className="video-empty-icon" style={{ background: "rgba(255,80,80,0.2)" }}>
                     <i className="fas fa-triangle-exclamation" style={{ color: "#ff5050" }} />
                   </div>
-                  <h4 style={{ color: "#ff8080" }}>الفيديو لم يُحمَّل</h4>
+                  <h4 style={{ color: "#ff8080" }}>{t.videoErrorTitle}</h4>
                   <p style={{ fontSize: 12, wordBreak: "break-all", direction: "ltr" }}>{videoError}</p>
                   <a
                     href={lesson?.src}
@@ -210,7 +212,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                     rel="noopener noreferrer"
                     style={{ color: "#7c6bfa", marginTop: 8, fontSize: 13, textDecoration: "underline" }}
                   >
-                    افتح الفيديو في تبويب جديد ↗
+                    {t.videoOpenNewTab}
                   </a>
                 </div>
               )}

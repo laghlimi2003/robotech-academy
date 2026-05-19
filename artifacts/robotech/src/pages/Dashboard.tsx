@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { labsList, difficultyColors } from "../data/labs";
+import { labsList, difficultyColors, localizeLab } from "../data/labs";
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
 import type { T, Lang } from "../hooks/useLang";
@@ -36,13 +36,14 @@ const BADGES = [
 export default function Dashboard({ user, t, lang, onOpenLab }: DashboardProps) {
   const raw = useMemo(() => loadRawProgress(), []);
 
-  const labStats = useMemo(() => labsList.map(lab => {
+  const labStats = useMemo(() => labsList.map(rawLab => {
+    const lab = localizeLab(rawLab, lang);
     const prog = raw[lab.key];
     const doneTasks   = prog?.doneTasks?.length ?? 0;
     const doneLessons = prog?.completedLessons?.length ?? 0;
     const overall     = getLabOverallProgress(lab.key, lab.heroTasks.length, lab.lessons.length);
     return { lab, doneTasks, doneLessons, overall };
-  }), [raw]);
+  }), [raw, lang]);
 
   const totalTasks   = labStats.reduce((s, l) => s + l.doneTasks, 0);
   const totalLessons = labStats.reduce((s, l) => s + l.doneLessons, 0);

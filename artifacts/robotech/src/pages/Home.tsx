@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { labsList, difficultyColors, type Difficulty } from "../data/labs";
+import { labsList, difficultyColors, localizeLab, type Difficulty } from "../data/labs";
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
 import type { T, Lang } from "../hooks/useLang";
@@ -17,19 +17,21 @@ type Filter = "all" | Difficulty;
 
 const howStepIcons = ["fa-hand-pointer", "fa-video", "fa-laptop-code", "fa-trophy"];
 
-export default function Home({ onOpenLab, user, t }: HomeProps) {
+export default function Home({ onOpenLab, user, t, lang }: HomeProps) {
   const [filter, setFilter] = useState<Filter>("all");
   const [progMap, setProgMap] = useState<Record<string, number>>({});
 
+  const localized = labsList.map(l => localizeLab(l, lang));
+
   useEffect(() => {
     const map: Record<string, number> = {};
-    labsList.forEach((lab) => {
+    localized.forEach((lab) => {
       map[lab.key] = getLabOverallProgress(lab.key, lab.heroTasks.length, lab.lessons.length);
     });
     setProgMap(map);
-  }, []);
+  }, [lang]);
 
-  const filtered = filter === "all" ? labsList : labsList.filter((l) => l.difficulty === filter);
+  const filtered = filter === "all" ? localized : localized.filter((l) => l.difficulty === filter);
 
   const stats = [
     { icon: "fa-flask",       value: String(labsList.length), label: t.stat1, grad: "linear-gradient(135deg,#7c6bfa,#a55eea)" },
@@ -38,11 +40,12 @@ export default function Home({ onOpenLab, user, t }: HomeProps) {
     { icon: "fa-star",        value: "∞",                     label: t.stat4, grad: "linear-gradient(135deg,#43e97b,#38f9d7)" },
   ];
 
+  const numerals = lang === "ar" ? ["١", "٢", "٣", "٤"] : ["1", "2", "3", "4"];
   const howSteps = [
-    { num: "١", icon: howStepIcons[0], title: t.how1Title, desc: t.how1Desc },
-    { num: "٢", icon: howStepIcons[1], title: t.how2Title, desc: t.how2Desc },
-    { num: "٣", icon: howStepIcons[2], title: t.how3Title, desc: t.how3Desc },
-    { num: "٤", icon: howStepIcons[3], title: t.how4Title, desc: t.how4Desc },
+    { num: numerals[0], icon: howStepIcons[0], title: t.how1Title, desc: t.how1Desc },
+    { num: numerals[1], icon: howStepIcons[1], title: t.how2Title, desc: t.how2Desc },
+    { num: numerals[2], icon: howStepIcons[2], title: t.how3Title, desc: t.how3Desc },
+    { num: numerals[3], icon: howStepIcons[3], title: t.how4Title, desc: t.how4Desc },
   ];
 
   return (
@@ -57,7 +60,7 @@ export default function Home({ onOpenLab, user, t }: HomeProps) {
               {t.heroBadge}
             </div>
             <h1 className="hero-title">
-              {t.heroTitle1} {user.avatar} {user.name}!&nbsp;<br />
+              <bdi>{t.heroTitle1} {user.avatar} {user.name}</bdi><br />
               <span>{t.heroTitle2}</span>
             </h1>
             <p className="hero-subtitle">{t.heroSub}</p>
