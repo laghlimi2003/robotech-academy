@@ -45,29 +45,29 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   const pauseMedia = useCallback(() => {
     try { videoRef.current?.pause(); } catch (_) {}
-    if (videoRef.current) { videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     if (embedRef.current) embedRef.current.src = "";
   }, []);
-
-  const applyLesson = useCallback((idx: number) => {
-    pauseMedia();
-    const l = config?.lessons[idx];
-    if (!l) return;
-    requestAnimationFrame(() => {
-      if (l.type === "video" && l.src && videoRef.current) videoRef.current.src = l.src;
-      if (l.type === "embed" && l.src && embedRef.current) embedRef.current.src = l.src;
-    });
-  }, [config, pauseMedia]);
 
   useEffect(() => {
     setSimReady(false);
     setSimLoaded(false);
     setLessonIdx(0);
     pauseMedia();
-    applyLesson(0);
     if (simRef.current) simRef.current.src = "";
     setPrevCount(doneTasks.length);
   }, [labKey]);
+
+  useEffect(() => {
+    pauseMedia();
+    const l = config?.lessons[lessonIdx];
+    if (!l) return;
+    if (l.type === "video" && videoRef.current) {
+      videoRef.current.load();
+    }
+    if (l.type === "embed" && embedRef.current) {
+      embedRef.current.src = l.src ?? "";
+    }
+  }, [labKey, lessonIdx, config, pauseMedia]);
 
   useEffect(() => {
     if (doneTasks.length > prevCount) {
@@ -83,7 +83,6 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   const selectLesson = (idx: number) => {
     setLessonIdx(idx);
-    applyLesson(idx);
     markLesson(idx);
   };
 
@@ -192,6 +191,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
             <div className="video-stage">
               <video
                 ref={videoRef}
+                key={`${labKey}-${lessonIdx}`}
+                src={isVideo && lesson?.src ? lesson.src : undefined}
                 style={{ display: hasMedia && isVideo ? "block" : "none" }}
                 controls preload="metadata" playsInline
               />
