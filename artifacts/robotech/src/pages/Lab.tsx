@@ -187,9 +187,15 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                 key={`${labKey}-${lessonIdx}`}
                 src={isVideo && lesson?.src ? lesson.src : undefined}
                 style={{ display: hasMedia && isVideo ? "block" : "none" }}
-                controls preload="metadata" playsInline
-                onError={() => setVideoError(`فشل تحميل: ${lesson?.src ?? ""}`)}
+                controls preload="auto" playsInline
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  if (el.src && el.error) {
+                    setVideoError(`خطأ (${el.error.code}): ${el.currentSrc}`);
+                  }
+                }}
                 onLoadedMetadata={() => setVideoError("")}
+                onCanPlay={() => setVideoError("")}
               />
               {isVideo && hasMedia && videoError && (
                 <div className="video-empty" style={{ background: "rgba(0,0,0,0.85)", zIndex: 5 }}>
