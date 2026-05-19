@@ -5,7 +5,13 @@ import ProgressRing from "../components/ProgressRing";
 import BadgeToast from "../components/BadgeToast";
 import Confetti from "../components/Confetti";
 import Quiz from "../components/Quiz";
+import Certificate from "../components/Certificate";
 import type { T, Lang } from "../hooks/useLang";
+
+interface LabUser {
+  name: string;
+  email?: string;
+}
 
 interface LabProps {
   labKey: string;
@@ -15,11 +21,12 @@ interface LabProps {
   t: T;
   lang: Lang;
   setLang: (l: Lang) => void;
+  user: LabUser;
 }
 
 const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr: "🇫🇷" };
 
-export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, setLang }: LabProps) {
+export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, setLang, user }: LabProps) {
   const rawConfig = labConfigs[labKey];
   const config = rawConfig ? localizeLab(rawConfig, lang) : undefined;
 
@@ -32,6 +39,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [videoError, setVideoError] = useState<string>("");
   const [quizOpenFor, setQuizOpenFor] = useState<number | null>(null);
+  const [showCert, setShowCert] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const embedRef = useRef<HTMLIFrameElement>(null);
@@ -120,6 +128,15 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   return (
     <div className="lab-view" data-theme={theme}>
+      {showCert && (
+        <Certificate
+          userName={user.name}
+          lab={config}
+          lang={lang}
+          t={t}
+          onClose={() => setShowCert(false)}
+        />
+      )}
       {showConfetti && <Confetti onDone={() => setShowCon(false)} />}
       <BadgeToast
         message={toast.msg}
@@ -195,6 +212,25 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
               <ProgressRing percent={taskPercent}    color="#43e97b"      label={t.heroTasks} />
               <ProgressRing percent={overallPercent} color="#f7971e"      label="%" />
             </div>
+
+            {(lessonPercent === 100 && taskPercent === 100) ? (
+              <button
+                className="cert-cta"
+                style={{ background: config.gradient, boxShadow: `0 8px 24px ${config.glowColor}` }}
+                onClick={() => setShowCert(true)}
+              >
+                <div className="cert-cta-icon"><i className="fas fa-award" /></div>
+                <div className="cert-cta-text">
+                  <strong>{t.certUnlocked}</strong>
+                  <span>{t.certUnlockHint}</span>
+                </div>
+                <i className="fas fa-arrow-left cert-cta-arrow" />
+              </button>
+            ) : (
+              <div className="cert-locked" title={t.certLockedHint}>
+                <i className="fas fa-lock" /> {t.certLockedHint}
+              </div>
+            )}
           </div>
 
           <div className="lesson-list-panel">

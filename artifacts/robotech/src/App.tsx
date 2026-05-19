@@ -162,6 +162,7 @@ export default function App() {
           t={t}
           lang={lang}
           setLang={setLang}
+          user={user}
         />
       )}
     </>
