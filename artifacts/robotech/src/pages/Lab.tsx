@@ -40,14 +40,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
     labKey, rawConfig?.heroTasks.ar.length ?? 0, rawConfig?.lessons.length ?? 0
   );
 
-  const lesson   = config?.lessons[lessonIdx];
-  const hasMedia = !!(lesson?.src?.trim());
-  const isEmbed  = lesson?.type === "embed";
-  const isVideo  = lesson?.type === "video";
-
   const pauseMedia = useCallback(() => {
     try { videoRef.current?.pause(); } catch (_) {}
-    if (embedRef.current) embedRef.current.src = "";
   }, []);
 
   useEffect(() => {
@@ -62,15 +56,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   useEffect(() => {
     pauseMedia();
     setVideoError("");
-    const l = config?.lessons[lessonIdx];
-    if (!l) return;
-    if (l.type === "video" && videoRef.current) {
-      videoRef.current.load();
-    }
-    if (l.type === "embed" && embedRef.current) {
-      embedRef.current.src = l.src ?? "";
-    }
-  }, [labKey, lessonIdx, config, pauseMedia]);
+  }, [labKey, lessonIdx, pauseMedia]);
 
   useEffect(() => {
     if (doneTasks.length > prevCount) {
@@ -182,65 +168,6 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
         {/* ── SIDE PANEL ── */}
         <aside className="lab-side">
 
-          <div className="video-panel">
-            <div className="video-stage">
-              <video
-                ref={videoRef}
-                key={`${labKey}-${lessonIdx}`}
-                src={isVideo && lesson?.src ? lesson.src : undefined}
-                style={{ display: hasMedia && isVideo ? "block" : "none" }}
-                controls preload="auto" playsInline
-                onError={(e) => {
-                  const el = e.currentTarget;
-                  if (el.src && el.error) {
-                    setVideoError(`${t.videoErrorPrefix} (${el.error.code}): ${el.currentSrc}`);
-                  }
-                }}
-                onLoadedMetadata={() => setVideoError("")}
-                onCanPlay={() => setVideoError("")}
-              />
-              {isVideo && hasMedia && videoError && (
-                <div className="video-empty" style={{ background: "rgba(0,0,0,0.85)", zIndex: 5 }}>
-                  <div className="video-empty-icon" style={{ background: "rgba(255,80,80,0.2)" }}>
-                    <i className="fas fa-triangle-exclamation" style={{ color: "#ff5050" }} />
-                  </div>
-                  <h4 style={{ color: "#ff8080" }}>{t.videoErrorTitle}</h4>
-                  <p style={{ fontSize: 12, wordBreak: "break-all", direction: "ltr" }}>{videoError}</p>
-                  <a
-                    href={lesson?.src}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "#7c6bfa", marginTop: 8, fontSize: 13, textDecoration: "underline" }}
-                  >
-                    {t.videoOpenNewTab}
-                  </a>
-                </div>
-              )}
-              <iframe
-                ref={embedRef}
-                style={{ display: hasMedia && isEmbed ? "block" : "none" }}
-                title="lesson"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-              {!hasMedia && (
-                <div className="video-empty">
-                  <div className="video-empty-icon"><i className="fas fa-video" /></div>
-                  <h4>{t.lessonsList}</h4>
-                  <p>{t.labsDesc}</p>
-                </div>
-              )}
-            </div>
-            <div className="video-info">
-              <div className="video-badge">
-                <i className="fas fa-circle-play" />
-                {lessonIdx + 1} / {config.lessons.length}
-              </div>
-              <h4>{lesson?.title ?? t.lessonsList}</h4>
-              <p>{lesson?.description ?? ""}</p>
-            </div>
-          </div>
-
           <div className="progress-panel">
             <h4><i className="fas fa-chart-pie" /> {t.yourProgress}</h4>
             <div className="progress-rings">
@@ -257,24 +184,89 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
             </div>
             <div className="lesson-scroll">
               {config.lessons.map((les, idx) => {
-                const isDone = completedLessons.includes(idx);
+                const isDone   = completedLessons.includes(idx);
+                const isActive = idx === lessonIdx;
+                const lHasMedia = !!(les.src?.trim());
+                const lIsVideo  = les.type === "video";
+                const lIsEmbed  = les.type === "embed";
                 return (
-                  <button
-                    key={idx}
-                    className={`lesson-item${idx === lessonIdx ? " active" : ""}${isDone ? " done" : ""}`}
-                    onClick={() => selectLesson(idx)}
-                  >
-                    <div className="lesson-num">
-                      {isDone ? <i className="fas fa-check" /> : idx + 1}
-                    </div>
-                    <div className="lesson-meta-col">
-                      <span className="lesson-name">{les.title}</span>
-                      <span className="lesson-dur">
-                        <i className="fas fa-clock" style={{ marginLeft: 4 }} />{les.duration}
-                      </span>
-                    </div>
-                    <span className="lesson-type-pill">{les.type}</span>
-                  </button>
+                  <div key={idx} className={`lesson-row${isActive ? " active" : ""}${isDone ? " done" : ""}`}>
+                    <button
+                      type="button"
+                      className="lesson-item"
+                      onClick={() => selectLesson(idx)}
+                      aria-expanded={isActive}
+                    >
+                      <div className="lesson-num">
+                        {isDone ? <i className="fas fa-check" /> : idx + 1}
+                      </div>
+                      <div className="lesson-meta-col">
+                        <span className="lesson-name">{les.title}</span>
+                        <span className="lesson-dur">
+                          <i className="fas fa-clock" style={{ marginInlineEnd: 4 }} />{les.duration}
+                        </span>
+                      </div>
+                      <span className="lesson-type-pill">{les.type}</span>
+                      <i className={`fas fa-chevron-${isActive ? "up" : "down"} lesson-chev`} />
+                    </button>
+
+                    {isActive && (
+                      <div className="lesson-expand">
+                        <div className="video-stage">
+                          {lIsVideo && lHasMedia && (
+                            <video
+                              ref={videoRef}
+                              key={`${labKey}-${idx}`}
+                              src={les.src}
+                              controls preload="auto" playsInline
+                              onError={(e) => {
+                                const el = e.currentTarget;
+                                if (el.src && el.error) {
+                                  setVideoError(`${t.videoErrorPrefix} (${el.error.code}): ${el.currentSrc}`);
+                                }
+                              }}
+                              onLoadedMetadata={() => setVideoError("")}
+                              onCanPlay={() => setVideoError("")}
+                            />
+                          )}
+                          {lIsVideo && lHasMedia && videoError && (
+                            <div className="video-empty" style={{ background: "rgba(0,0,0,0.85)", zIndex: 5 }}>
+                              <div className="video-empty-icon" style={{ background: "rgba(255,80,80,0.2)" }}>
+                                <i className="fas fa-triangle-exclamation" style={{ color: "#ff5050" }} />
+                              </div>
+                              <h4 style={{ color: "#ff8080" }}>{t.videoErrorTitle}</h4>
+                              <p style={{ fontSize: 12, wordBreak: "break-all", direction: "ltr" }}>{videoError}</p>
+                              <a
+                                href={les.src}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: "#7c6bfa", marginTop: 8, fontSize: 13, textDecoration: "underline" }}
+                              >
+                                {t.videoOpenNewTab}
+                              </a>
+                            </div>
+                          )}
+                          {lIsEmbed && lHasMedia && (
+                            <iframe
+                              ref={embedRef}
+                              src={les.src}
+                              title={les.title}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          )}
+                          {!lHasMedia && (
+                            <div className="video-empty">
+                              <div className="video-empty-icon"><i className="fas fa-video" /></div>
+                              <h4>{les.title}</h4>
+                              <p>{les.description}</p>
+                            </div>
+                          )}
+                        </div>
+                        <p className="lesson-desc">{les.description}</p>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

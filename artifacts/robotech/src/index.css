@@ -1619,7 +1619,42 @@ html[dir="ltr"] body { direction: ltr; }
 
 .lesson-list-head span { font-size: 12px; color: var(--text-muted); font-weight: 700; }
 
-.lesson-scroll { max-height: 200px; overflow-y: auto; }
+.lesson-scroll { max-height: 560px; overflow-y: auto; }
+
+.lesson-row {
+  border-bottom: 1px solid var(--glass-border);
+}
+.lesson-row:last-child { border-bottom: none; }
+.lesson-row.active { background: rgba(124,107,250,0.06); }
+
+.lesson-row .lesson-item { border-bottom: none; }
+.lesson-row.active .lesson-item { background: rgba(124,107,250,0.12); }
+
+.lesson-chev {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-inline-start: 8px;
+  transition: transform 0.2s;
+}
+
+.lesson-expand {
+  padding: 10px 12px 14px;
+  animation: lessonExpandIn 0.25s ease;
+}
+@keyframes lessonExpandIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lesson-expand .video-stage {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+}
+.lesson-desc {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
 .lesson-scroll::-webkit-scrollbar { width: 4px; }
 .lesson-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
@@ -1634,7 +1669,7 @@ html[dir="ltr"] body { direction: ltr; }
   border-bottom: 1px solid var(--glass-border);
   cursor: pointer;
   font-family: "Cairo", sans-serif;
-  text-align: right;
+  text-align: start;
   transition: var(--transition);
 }
 
@@ -1652,8 +1687,11 @@ html[dir="ltr"] body { direction: ltr; }
   color: var(--text-muted);
 }
 
-.lesson-item.active .lesson-num { background: var(--accent); border-color: var(--accent); color: #fff; }
-.lesson-item.done .lesson-num   { background: rgba(67,233,123,0.15); border-color: rgba(67,233,123,0.4); color: #43e97b; }
+.lesson-item.active .lesson-num,
+.lesson-row.active .lesson-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+.lesson-item.done .lesson-num,
+.lesson-row.done .lesson-num   { background: rgba(67,233,123,0.15); border-color: rgba(67,233,123,0.4); color: #43e97b; }
+.lesson-row.active .lesson-item { border-inline-end: 3px solid var(--accent); }
 
 .lesson-meta-col { flex: 1; }
 .lesson-name { font-size: 13px; font-weight: 800; color: var(--text-primary); display: block; margin-bottom: 3px; }
