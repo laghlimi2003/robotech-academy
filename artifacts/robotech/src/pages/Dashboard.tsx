@@ -3,6 +3,7 @@ import { labsList, difficultyColors } from "../data/labs";
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
 import type { T, Lang } from "../hooks/useLang";
+import Footer from "../components/Footer";
 import ProgressRing from "../components/ProgressRing";
 
 interface DashboardProps {
@@ -191,10 +192,7 @@ export default function Dashboard({ user, t, lang, onOpenLab }: DashboardProps) 
 
       </div>
 
-      <footer className="site-footer">
-        <i className="fas fa-robot" style={{ color: "var(--accent)", marginLeft: 8 }} />
-        {t.footer}
-      </footer>
+      <Footer t={t} />
     </div>
   );
 }

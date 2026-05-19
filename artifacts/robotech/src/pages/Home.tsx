@@ -3,6 +3,7 @@ import { labsList, difficultyColors, type Difficulty } from "../data/labs";
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
 import type { T, Lang } from "../hooks/useLang";
+import Footer from "../components/Footer";
 
 interface HomeProps {
   onOpenLab: (key: string) => void;
@@ -204,10 +205,7 @@ export default function Home({ onOpenLab, user, t }: HomeProps) {
         </div>
       </div>
 
-      <footer className="site-footer">
-        <i className="fas fa-robot" style={{ color: "var(--accent)", marginLeft: 8 }} />
-        {t.footer}
-      </footer>
+      <Footer t={t} />
     </>
   );
 }

@@ -1356,6 +1356,79 @@ body {
   font-size: 14px;
 }
 
+/* New Footer */
+.site-footer-new {
+  position: relative; z-index: 1;
+  background: var(--footer-bg, rgba(0,0,0,0.6));
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  padding: 48px 24px 20px;
+}
+.footer-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+.footer-col-right { text-align: end; }
+.footer-title {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+.footer-contact { display: flex; flex-direction: column; gap: 10px; }
+.footer-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+.footer-link:hover { color: var(--accent); }
+.footer-socials {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.footer-social {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+  transition: all 0.2s;
+  font-size: 15px;
+}
+.footer-social:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-2px);
+}
+.footer-bottom {
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--glass-border);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+@media (max-width: 640px) {
+  .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+  .footer-col-right { text-align: start; }
+  .footer-socials { justify-content: flex-start; }
+}
+
 /* ══════════════════════════════════════
    LAB VIEW (full-screen overlay)
 ══════════════════════════════════════ */
