@@ -1460,8 +1460,13 @@ body {
   position: relative;
   width: 100%;
   aspect-ratio: 16/9;
+  min-height: 200px;
   background: var(--video-bg);
   overflow: hidden;
+}
+
+.video-panel {
+  flex-shrink: 0;
 }
 
 .video-stage video, .video-stage iframe {

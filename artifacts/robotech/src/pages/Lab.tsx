@@ -180,15 +180,6 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
         {/* ── SIDE PANEL ── */}
         <aside className="lab-side">
 
-          <div className="progress-panel">
-            <h4><i className="fas fa-chart-pie" /> {t.yourProgress}</h4>
-            <div className="progress-rings">
-              <ProgressRing percent={lessonPercent}  color={config.color} label={t.lessonsCount} />
-              <ProgressRing percent={taskPercent}    color="#43e97b"      label={t.heroTasks} />
-              <ProgressRing percent={overallPercent} color="#f7971e"      label="%" />
-            </div>
-          </div>
-
           <div className="video-panel">
             <div className="video-stage">
               <video
@@ -239,6 +230,15 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
               </div>
               <h4>{lesson?.title ?? t.lessonsList}</h4>
               <p>{lesson?.description ?? ""}</p>
+            </div>
+          </div>
+
+          <div className="progress-panel">
+            <h4><i className="fas fa-chart-pie" /> {t.yourProgress}</h4>
+            <div className="progress-rings">
+              <ProgressRing percent={lessonPercent}  color={config.color} label={t.lessonsCount} />
+              <ProgressRing percent={taskPercent}    color="#43e97b"      label={t.heroTasks} />
+              <ProgressRing percent={overallPercent} color="#f7971e"      label="%" />
             </div>
           </div>
 
