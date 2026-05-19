@@ -38,6 +38,12 @@ export default function App() {
 
   const goHome      = () => transition(() => setView("home"));
   const goDashboard = () => transition(() => setView("dashboard"));
+  const goLabs      = () => {
+    transition(() => setView("home"));
+    setTimeout(() => {
+      document.getElementById("labs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 320);
+  };
 
   /* ── NOT LOGGED IN → show Login ── */
   if (!user) {
@@ -150,7 +156,7 @@ export default function App() {
       {view === "lab"  && labKey && (
         <Lab
           labKey={labKey}
-          onGoHome={goHome}
+          onGoHome={goLabs}
           theme={theme}
           toggleTheme={toggleTheme}
           t={t}
