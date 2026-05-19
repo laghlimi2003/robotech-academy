@@ -28,6 +28,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   const [toast, setToast]          = useState({ visible: false, msg: "" });
   const [prevCount, setPrevCount]  = useState(0);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [videoError, setVideoError] = useState<string>("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const embedRef = useRef<HTMLIFrameElement>(null);
@@ -59,6 +60,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   useEffect(() => {
     pauseMedia();
+    setVideoError("");
     const l = config?.lessons[lessonIdx];
     if (!l) return;
     if (l.type === "video" && videoRef.current) {
@@ -195,7 +197,26 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                 src={isVideo && lesson?.src ? lesson.src : undefined}
                 style={{ display: hasMedia && isVideo ? "block" : "none" }}
                 controls preload="metadata" playsInline
+                onError={() => setVideoError(`فشل تحميل: ${lesson?.src ?? ""}`)}
+                onLoadedMetadata={() => setVideoError("")}
               />
+              {isVideo && hasMedia && videoError && (
+                <div className="video-empty" style={{ background: "rgba(0,0,0,0.85)", zIndex: 5 }}>
+                  <div className="video-empty-icon" style={{ background: "rgba(255,80,80,0.2)" }}>
+                    <i className="fas fa-triangle-exclamation" style={{ color: "#ff5050" }} />
+                  </div>
+                  <h4 style={{ color: "#ff8080" }}>الفيديو لم يُحمَّل</h4>
+                  <p style={{ fontSize: 12, wordBreak: "break-all", direction: "ltr" }}>{videoError}</p>
+                  <a
+                    href={lesson?.src}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#7c6bfa", marginTop: 8, fontSize: 13, textDecoration: "underline" }}
+                  >
+                    افتح الفيديو في تبويب جديد ↗
+                  </a>
+                </div>
+              )}
               <iframe
                 ref={embedRef}
                 style={{ display: hasMedia && isEmbed ? "block" : "none" }}
