@@ -4,9 +4,11 @@ import Lab  from "./pages/Lab";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Particles from "./components/Particles";
+import PwaInstall from "./components/PwaInstall";
 import { useAuth } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
+import { useReminder, requestNotificationPermission } from "./hooks/useReminder";
 
 type View = "home" | "lab" | "dashboard";
 const LAST_LAB_KEY = "robotech_last_lab_v2";
@@ -22,6 +24,16 @@ export default function App() {
   const [labKey, setLabKey] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [notifState, setNotifState] = useState<NotificationPermission | "unsupported">(
+    typeof Notification === "undefined" ? "unsupported" : Notification.permission
+  );
+
+  useReminder(t, user?.name);
+
+  const enableNotifications = async () => {
+    const res = await requestNotificationPermission();
+    setNotifState(res);
+  };
 
   const transition = (cb: () => void) => {
     setFading(true);
@@ -164,6 +176,14 @@ export default function App() {
           setLang={setLang}
           user={user}
         />
+      )}
+
+      <PwaInstall t={t} />
+
+      {view === "dashboard" && notifState === "default" && (
+        <button className="notif-enable-fab" onClick={enableNotifications}>
+          <i className="fas fa-bell" /> {t.pwaEnableNotifs}
+        </button>
       )}
     </>
   );

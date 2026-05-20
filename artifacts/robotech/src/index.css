@@ -2104,6 +2104,85 @@ html[dir="ltr"] body { direction: ltr; }
 @media (max-width: 1100px) {
   .cert-paper { transform-origin: top center; }
 }
+
+/* ══ PWA Install Banner ══ */
+.pwa-banner {
+  position: fixed;
+  inset-inline: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  z-index: 9000;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(102,126,234,0.95), rgba(118,75,162,0.95));
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.15);
+  max-width: 520px;
+  margin: 0 auto;
+  animation: pwaSlideUp 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes pwaSlideUp {
+  from { transform: translateY(120%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.pwa-banner-icon {
+  width: 42px; height: 42px;
+  background: rgba(255,255,255,0.22);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.pwa-banner-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pwa-banner-text strong { font-size: 14px; font-weight: 800; }
+.pwa-banner-text span   { font-size: 12px; opacity: 0.92; line-height: 1.4; }
+.pwa-banner-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.pwa-btn {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: "Cairo", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: var(--transition);
+}
+.pwa-btn.primary {
+  background: #fff;
+  color: #667eea;
+}
+.pwa-btn.primary:hover { transform: scale(1.05); }
+.pwa-btn.ghost {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  width: 32px; height: 32px;
+  padding: 0;
+  justify-content: center;
+}
+.pwa-btn.ghost:hover { background: rgba(255,255,255,0.3); }
+
+.notif-enable-fab {
+  position: fixed;
+  inset-inline-end: 20px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  z-index: 8500;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a2e;
+  font-family: "Cairo", sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(247,151,30,0.45);
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--transition);
+}
+.notif-enable-fab:hover { transform: translateY(-3px) scale(1.05); }
 .lesson-scroll::-webkit-scrollbar { width: 4px; }
 .lesson-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
