@@ -5,12 +5,16 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Particles from "./components/Particles";
 import PwaInstall from "./components/PwaInstall";
+import XPBar from "./components/XPBar";
+import RewardToast from "./components/RewardToast";
+import Leaderboard from "./pages/Leaderboard";
 import { useAuth } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
 import { useReminder, requestNotificationPermission } from "./hooks/useReminder";
+import { useGamification } from "./hooks/useGamification";
 
-type View = "home" | "lab" | "dashboard";
+type View = "home" | "lab" | "dashboard" | "leaderboard";
 const LAST_LAB_KEY = "robotech_last_lab_v2";
 
 const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr: "🇫🇷" };
@@ -29,6 +33,7 @@ export default function App() {
   );
 
   useReminder(t, user?.name);
+  const gam = useGamification(user?.email, user?.name ?? "", user?.avatar ?? "🤖", lang);
 
   const enableNotifications = async () => {
     const res = await requestNotificationPermission();
@@ -48,8 +53,9 @@ export default function App() {
     });
   };
 
-  const goHome      = () => transition(() => setView("home"));
-  const goDashboard = () => transition(() => setView("dashboard"));
+  const goHome        = () => transition(() => setView("home"));
+  const goDashboard   = () => transition(() => setView("dashboard"));
+  const goLeaderboard = () => transition(() => setView("leaderboard"));
   const goLabs      = () => {
     transition(() => setView("home"));
     setTimeout(() => {
@@ -91,7 +97,7 @@ export default function App() {
       {fading && <div className="page-transition" />}
 
       {/* Header — home and dashboard views */}
-      {(view === "home" || view === "dashboard") && (
+      {(view === "home" || view === "dashboard" || view === "leaderboard") && (
         <header className="site-header">
           <button className="logo-btn" onClick={goHome} aria-label={t.home}>
             <div className="logo-icon">🤖</div>
@@ -115,10 +121,17 @@ export default function App() {
                   <i className="fas fa-chart-bar" /> {t.dashboard}
                 </a>
               </li>
+              <li>
+                <a href="#" className={view === "leaderboard" ? "active" : ""} onClick={(e) => { e.preventDefault(); goLeaderboard(); }}>
+                  <i className="fas fa-trophy" /> {t.xpLeaderboard}
+                </a>
+              </li>
             </ul>
           </nav>
 
           <div className="header-right">
+            <XPBar xp={gam.xp} level={gam.level} streak={gam.streak} lang={lang} t={t} compact onClick={goLeaderboard} />
+
             {/* Language Selector */}
             <div className="lang-selector">
               <button
@@ -165,6 +178,16 @@ export default function App() {
 
       {view === "home"      && <Home onOpenLab={openLab} user={user} theme={theme} t={t} lang={lang} />}
       {view === "dashboard" && <Dashboard user={user} t={t} lang={lang} onOpenLab={openLab} />}
+      {view === "leaderboard" && (
+        <Leaderboard
+          currentEmail={user.email}
+          earnedBadges={gam.badges}
+          resolveBadge={gam.resolveBadge}
+          lang={lang}
+          t={t}
+          theme={theme}
+        />
+      )}
       {view === "lab"  && labKey && (
         <Lab
           labKey={labKey}
@@ -175,9 +198,11 @@ export default function App() {
           lang={lang}
           setLang={setLang}
           user={user}
+          gam={gam}
         />
       )}
 
+      <RewardToast rewards={gam.rewards} onDismiss={gam.dismissReward} lang={lang} t={t} />
       <PwaInstall t={t} />
 
       {view === "dashboard" && notifState === "default" && (

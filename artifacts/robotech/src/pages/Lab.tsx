@@ -7,6 +7,9 @@ import Confetti from "../components/Confetti";
 import Quiz from "../components/Quiz";
 import Certificate from "../components/Certificate";
 import type { T, Lang } from "../hooks/useLang";
+import type { useGamification } from "../hooks/useGamification";
+
+type Gam = ReturnType<typeof useGamification>;
 
 interface LabUser {
   name: string;
@@ -22,11 +25,12 @@ interface LabProps {
   lang: Lang;
   setLang: (l: Lang) => void;
   user: LabUser;
+  gam?: Gam;
 }
 
 const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr: "🇫🇷" };
 
-export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, setLang, user }: LabProps) {
+export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, setLang, user, gam }: LabProps) {
   const rawConfig = labConfigs[labKey];
   const config = rawConfig ? localizeLab(rawConfig, lang) : undefined;
 
@@ -76,9 +80,19 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
       } else {
         setToast({ visible: true, msg: `${t.toastTaskDone} ${doneTasks.length} ⭐` });
       }
+      // Award per-task by index — idempotent (unchecking won't re-trigger; rechecking won't double-award)
+      for (const taskIdx of doneTasks) gam?.awardTask(labKey, taskIdx);
     }
     setPrevCount(doneTasks.length);
-  }, [doneTasks.length]);
+  }, [doneTasks.length, doneTasks, isAllTasksDone, labKey, gam, t, prevCount]);
+
+  const prevOverall = useRef(0);
+  useEffect(() => {
+    if (overallPercent >= 100 && prevOverall.current < 100 && config) {
+      gam?.awardLabComplete(config.key, rawConfig!.title);
+    }
+    prevOverall.current = overallPercent;
+  }, [overallPercent, config, rawConfig, gam]);
 
   const selectLesson = (idx: number) => {
     if (idx === lessonIdx) {
@@ -91,16 +105,20 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
     setQuizOpenFor(null);
   };
 
-  const handleQuizPass = (idx: number) => {
+  const handleQuizPass = (idx: number, percent: number) => {
     markLesson(idx);
     setQuizOpenFor(null);
     setShowCon(true);
     setToast({ visible: true, msg: t.quizPassedMsg });
+    // Idempotent inside hook — safe to call always
+    gam?.awardLesson(labKey, idx);
+    gam?.awardQuiz(labKey, idx, percent);
   };
 
   const handleMarkWatched = (idx: number) => {
     markLesson(idx);
     setToast({ visible: true, msg: t.quizMarkWatched });
+    gam?.awardLesson(labKey, idx);
   };
 
   const launchSim = () => {
@@ -363,7 +381,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                               questions={les.quiz}
                               accentColor={config.color}
                               t={t}
-                              onPass={() => handleQuizPass(idx)}
+                              onPass={(percent) => handleQuizPass(idx, percent)}
                               onClose={() => setQuizOpenFor(null)}
                             />
                           )}
