@@ -8,7 +8,8 @@ import PwaInstall from "./components/PwaInstall";
 import XPBar from "./components/XPBar";
 import RewardToast from "./components/RewardToast";
 import Leaderboard from "./pages/Leaderboard";
-import { useAuth } from "./hooks/useAuth";
+import AdminPanel from "./pages/AdminPanel";
+import { useAuth, isAdminEmail } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
 import { useReminder, requestNotificationPermission } from "./hooks/useReminder";
@@ -83,6 +84,11 @@ export default function App() {
         />
       </>
     );
+  }
+
+  /* ── ADMIN → لوحة الإدارة مباشرة ── */
+  if (isAdminEmail(user.email)) {
+    return <AdminPanel onLogout={logout} theme={theme} />;
   }
 
   /* ── LOGGED IN ── */

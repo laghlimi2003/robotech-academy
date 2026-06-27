@@ -10,10 +10,18 @@ export interface User {
 const KEY = "robotech_user_v2";
 const USERS_KEY = "robotech_users_db";
 
+// ── Admin credentials (hardcoded — not stored in users DB) ───
+const ADMIN_EMAIL    = "admin@robotech.com";
+const ADMIN_PASSWORD = "RoboAdmin2024";
+
 function hashPass(p: string) {
   let h = 0;
   for (let i = 0; i < p.length; i++) h = (Math.imul(31, h) + p.charCodeAt(i)) | 0;
   return h.toString(16);
+}
+
+export function isAdminEmail(email: string) {
+  return email.trim().toLowerCase() === ADMIN_EMAIL;
 }
 
 function loadUser(): User | null {
@@ -31,11 +39,21 @@ export function useAuth() {
   const [error, setError] = useState("");
 
   const login = useCallback((email: string, password: string): boolean => {
+    const lEmail = email.trim().toLowerCase();
+    // Admin shortcut — bypass users DB
+    if (lEmail === ADMIN_EMAIL) {
+      if (password !== ADMIN_PASSWORD) { setError("كلمة مرور Admin خاطئة"); return false; }
+      const u: User = { name: "المدير", email: lEmail, avatar: "🛡️", joinDate: new Date().toLocaleDateString("ar-SA") };
+      localStorage.setItem(KEY, JSON.stringify(u));
+      setUser(u);
+      setError("");
+      return true;
+    }
     const users = loadUsers();
-    const record = users[email.toLowerCase()];
+    const record = users[lEmail];
     if (!record) { setError("البريد الإلكتروني غير مسجل"); return false; }
     if (record.hash !== hashPass(password)) { setError("كلمة المرور غير صحيحة"); return false; }
-    const u: User = { name: record.name, email: email.toLowerCase(), avatar: record.avatar, joinDate: record.joinDate };
+    const u: User = { name: record.name, email: lEmail, avatar: record.avatar, joinDate: record.joinDate };
     localStorage.setItem(KEY, JSON.stringify(u));
     setUser(u);
     setError("");
