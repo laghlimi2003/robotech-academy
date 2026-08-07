@@ -7,6 +7,7 @@ import Confetti from "../components/Confetti";
 import Quiz from "../components/Quiz";
 import Certificate from "../components/Certificate";
 import type { T, Lang } from "../hooks/useLang";
+import { useMediaUrl } from "../hooks/useMediaUrl";
 import type { useGamification } from "../hooks/useGamification";
 
 type Gam = ReturnType<typeof useGamification>;
@@ -42,6 +43,11 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   const [prevCount, setPrevCount]  = useState(0);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [videoError, setVideoError] = useState<string>("");
+
+  // Resolve Media Library (media://) references for the active lesson
+  const activeLesson = lessonIdx >= 0 ? config?.lessons[lessonIdx] : undefined;
+  const resolvedLessonSrc = useMediaUrl(activeLesson?.src);
+  const resolvedThumb = useMediaUrl(activeLesson?.thumbnail);
   const [simTimedOut, setSimTimedOut] = useState(false);
   const [simAttempt, setSimAttempt] = useState(0);
   const [quizOpenFor, setQuizOpenFor] = useState<number | null>(null);
@@ -307,7 +313,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                             <video
                               ref={videoRef}
                               key={`${labKey}-${idx}`}
-                              src={les.src}
+                              src={resolvedLessonSrc || les.src}
+                              poster={resolvedThumb || undefined}
                               controls preload="auto" playsInline
                               onError={(e) => {
                                 const el = e.currentTarget;

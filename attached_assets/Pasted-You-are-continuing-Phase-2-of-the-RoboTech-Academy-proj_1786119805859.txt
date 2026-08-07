@@ -1,0 +1,136 @@
+You are continuing Phase 2 of the RoboTech Academy project.
+
+Phase 2B-2: Complete the Admin CMS before database integration.
+
+IMPORTANT RULES
+
+- Do NOT redesign the application.
+- Do NOT modify the existing architecture.
+- Do NOT implement the real database yet.
+- Reuse all existing services and components.
+- Keep the project fully compatible with Phase 3.
+
+====================================================
+
+1. MEDIA LIBRARY
+
+Create a complete Media Library module inside the Admin Panel.
+
+The Media Library will become the central place to manage all media files.
+
+Support:
+
+• Images
+• Videos (MP4)
+• PDF files
+• Documents
+• Logos
+• Banners
+
+Each file must display:
+
+- Preview (when possible)
+- File name
+- File type
+- File size
+- Upload date
+
+Allow:
+
+- Upload
+- Rename
+- Delete
+- Search
+- Filter by type
+
+For now, use the current local storage/project structure.
+
+Prepare the architecture so the storage provider can later be replaced by Supabase Storage with minimal changes.
+
+====================================================
+
+2. VIDEO MANAGEMENT
+
+Replace manual video URL entry with an Upload option.
+
+The administrator should be able to:
+
+- Upload a local MP4 file
+- Select an existing video from the Media Library
+- Still support YouTube/Vimeo when needed
+
+Lessons should allow selecting videos directly from the Media Library.
+
+====================================================
+
+3. IMAGE MANAGEMENT
+
+Replace manual image URL fields.
+
+Allow selecting images from the Media Library for:
+
+- Lab images
+- Lesson thumbnails
+- News images
+- Site logo
+- Homepage banner
+
+====================================================
+
+4. SITE SETTINGS
+
+Complete the Site Settings module.
+
+Administrator can manage:
+
+- Website name
+- Logo
+- Primary color
+- Secondary color
+- Hero banner
+- Footer information
+- Social media links
+
+Changes must immediately appear across the Student application.
+
+====================================================
+
+5. DARK MODE
+
+Implement a complete Light / Dark Theme.
+
+Requirements:
+
+- Theme switch button in the navigation bar.
+- Works in Student application.
+- Works in Admin Panel.
+- Save the selected theme.
+- Respect system preference on first visit.
+
+====================================================
+
+6. NEWS
+
+Display published news on the homepage.
+
+Hidden or unpublished news must never appear.
+
+====================================================
+
+7. FINAL VALIDATION
+
+Verify:
+
+✓ Existing student features still work.
+✓ Existing Admin features still work.
+✓ Responsive layout is preserved.
+✓ Theme works correctly.
+✓ Media Library works.
+✓ Site Settings update the Student application immediately.
+
+Provide:
+
+- Files created
+- Files modified
+- Summary of completed work
+- Confirmation that the project is ready for Phase 3 (Database + Authentication + Cloud Storage).

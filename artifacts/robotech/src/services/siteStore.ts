@@ -9,8 +9,14 @@ export interface NewsItem {
   id: string;
   title: string;
   body: string;
+  image?: string;     // URL or media:// reference
   published: boolean;
   createdAt: string; // ISO date
+}
+
+/** Published news only, for the student homepage. */
+export function getPublishedNews(): NewsItem[] {
+  return getNews().filter(n => n.published);
 }
 
 const NEWS_KEY = "robotech_cms_news_v1";
@@ -30,13 +36,13 @@ export function getNews(): NewsItem[] {
   return loadNews().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function createNews(title: string, body: string, published: boolean): SaveResult {
+export function createNews(title: string, body: string, published: boolean, image?: string): SaveResult {
   if (!title.trim()) return { ok: false, error: "العنوان مطلوب" };
   const list = loadNews();
   if (list.some(n => n.title.trim() === title.trim())) return { ok: false, error: "يوجد خبر بنفس العنوان" };
   list.push({
     id: `news_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    title: title.trim(), body: body.trim(), published,
+    title: title.trim(), body: body.trim(), published, image: image || undefined,
     createdAt: new Date().toISOString(),
   });
   if (!persistNews(list)) return { ok: false, error: STORAGE_ERR };
@@ -62,10 +68,17 @@ export function deleteNews(id: string): SaveResult {
 
 export interface SiteSettings {
   siteName: string;
-  logo: string;          // emoji or image URL
+  logo: string;          // emoji, image URL, or media:// reference
   primaryColor: string;
   accentColor: string;
   bannerText: string;    // homepage hero banner override ("" = default)
+  bannerImage: string;   // homepage hero banner image ("" = none; URL or media://)
+  footerText: string;    // footer description override ("" = default)
+  footerPhone: string;
+  socialFacebook: string;
+  socialInstagram: string;
+  socialYoutube: string;
+  socialWhatsapp: string;
 }
 
 const SETTINGS_KEY = "robotech_cms_settings_v1";
@@ -76,7 +89,17 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   primaryColor: "#667eea",
   accentColor: "#764ba2",
   bannerText: "",
+  bannerImage: "",
+  footerText: "",
+  footerPhone: "",
+  socialFacebook: "",
+  socialInstagram: "",
+  socialYoutube: "",
+  socialWhatsapp: "",
 };
+
+/** Fired on window whenever settings are saved, so open student views update immediately. */
+export const SETTINGS_EVENT = "robotech-settings-changed";
 
 export function getSettings(): SiteSettings {
   try {
@@ -90,6 +113,7 @@ export function saveSettings(patch: Partial<SiteSettings>): SaveResult {
   if (!/^#[0-9a-fA-F]{6}$/.test(next.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(next.accentColor))
     return { ok: false, error: "صيغة اللون يجب أن تكون HEX مثل ‎#667eea" };
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(next)); } catch { return { ok: false, error: STORAGE_ERR }; }
+  window.dispatchEvent(new CustomEvent(SETTINGS_EVENT));
   return { ok: true };
 }
 

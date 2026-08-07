@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { labsList, difficultyColors, localizeLab, type Difficulty } from "../data/labs";
-import { getSettings } from "../services/siteStore";
-
-const siteSettings = getSettings();
+import { getPublishedNews } from "../services/siteStore";
+import { useSiteSettings } from "../hooks/useSiteSettings";
+import { useMediaUrl } from "../hooks/useMediaUrl";
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
 import type { T, Lang } from "../hooks/useLang";
@@ -20,9 +20,26 @@ type Filter = "all" | Difficulty;
 
 const howStepIcons = ["fa-hand-pointer", "fa-video", "fa-laptop-code", "fa-trophy"];
 
+function NewsCard({ item }: { item: ReturnType<typeof getPublishedNews>[number] }) {
+  const img = useMediaUrl(item.image);
+  return (
+    <article className="news-card">
+      {img && <img src={img} alt="" className="news-card-img" loading="lazy" />}
+      <div className="news-card-body">
+        <h4>{item.title}</h4>
+        <p>{item.body}</p>
+        <span className="news-card-date" dir="ltr"><i className="fas fa-calendar-days" /> {item.createdAt.slice(0, 10)}</span>
+      </div>
+    </article>
+  );
+}
+
 export default function Home({ onOpenLab, user, t, lang }: HomeProps) {
   const [filter, setFilter] = useState<Filter>("all");
   const [progMap, setProgMap] = useState<Record<string, number>>({});
+  const siteSettings = useSiteSettings();
+  const bannerImg = useMediaUrl(siteSettings.bannerImage || undefined);
+  const news = getPublishedNews();
 
   const localized = labsList.map(l => localizeLab(l, lang));
 
@@ -58,6 +75,11 @@ export default function Home({ onOpenLab, user, t, lang }: HomeProps) {
         <div className="home-wrap">
 
           {/* ── HERO ── */}
+          {bannerImg && (
+            <div className="home-banner-img">
+              <img src={bannerImg} alt="" />
+            </div>
+          )}
           <section className="hero-section">
             <div className="hero-badge">
               <i className="fas fa-robot" />
@@ -186,6 +208,21 @@ export default function Home({ onOpenLab, user, t, lang }: HomeProps) {
               })}
             </div>
           </section>
+
+          {/* ── NEWS (published only) ── */}
+          {news.length > 0 && (
+            <section className="news-section">
+              <div className="section-head">
+                <h2>
+                  <i className="fas fa-bullhorn" style={{ color: "var(--accent-2)" }} />
+                  {lang === "ar" ? "آخر الأخبار" : lang === "fr" ? "Actualités" : "Latest News"}
+                </h2>
+              </div>
+              <div className="news-grid">
+                {news.map(n => <NewsCard key={n.id} item={n} />)}
+              </div>
+            </section>
+          )}
 
           {/* ── HOW IT WORKS ── */}
           <section id="how" className="how-section">

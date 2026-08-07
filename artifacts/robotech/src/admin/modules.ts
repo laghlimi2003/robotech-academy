@@ -17,6 +17,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { id: "labs",         icon: "fa-flask",           title: "المختبرات",      desc: "إنشاء وتعديل مختبرات التعلم (Arduino، Scratch، ...).", placeholder: false },
   { id: "lessons",      icon: "fa-book-open",       title: "الدروس",         desc: "إدارة محتوى الدروس داخل كل مختبر.",                   placeholder: false },
   { id: "videos",       icon: "fa-video",           title: "الفيديوهات",     desc: "رفع وربط فيديوهات الدروس.",                            placeholder: false },
+  { id: "media",        icon: "fa-photo-film",      title: "مكتبة الوسائط",  desc: "رفع وإدارة الصور والفيديوهات والملفات.",               placeholder: false },
   { id: "simulators",   icon: "fa-microchip",       title: "المحاكيات",      desc: "إدارة روابط المحاكيات الخارجية وإعداداتها.",           placeholder: false },
   { id: "quizzes",      icon: "fa-circle-question", title: "الاختبارات",     desc: "إنشاء أسئلة الاختبارات وربطها بالدروس.",               placeholder: false },
   { id: "tasks",        icon: "fa-list-check",      title: "المهام",         desc: "إدارة مهام الأبطال داخل المختبرات.",                   placeholder: false },

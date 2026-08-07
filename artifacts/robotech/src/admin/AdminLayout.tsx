@@ -10,6 +10,7 @@ interface AdminLayoutProps {
   onNavigate: (id: string) => void;
   onLogout: () => void;
   theme: "dark" | "light";
+  onToggleTheme: () => void;
   children: React.ReactNode;
 }
 
@@ -17,7 +18,7 @@ interface AdminLayoutProps {
  * Admin Dashboard shell: sidebar + top bar + breadcrumb + content area.
  * Responsive: sidebar collapses to an off-canvas drawer below 900px.
  */
-export default function AdminLayout({ user, role, activeId, onNavigate, onLogout, theme, children }: AdminLayoutProps) {
+export default function AdminLayout({ user, role, activeId, onNavigate, onLogout, theme, onToggleTheme, children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const active = findModule(activeId);
 
@@ -78,6 +79,9 @@ export default function AdminLayout({ user, role, activeId, onNavigate, onLogout
             </nav>
           </div>
           <div className="admin-header-right">
+            <button className="cms-icon-btn" onClick={onToggleTheme} title={theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن"} aria-label="تبديل المظهر">
+              <i className={`fas ${theme === "dark" ? "fa-sun" : "fa-moon"}`} />
+            </button>
             <span className="admin-badge">{ROLE_LABELS[role]}</span>
             <div className="admin-user-chip" title={user.email}>
               <span>{user.avatar}</span>

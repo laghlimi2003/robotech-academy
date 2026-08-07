@@ -17,15 +17,8 @@ import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
 import { useReminder, requestNotificationPermission } from "./hooks/useReminder";
 import { useGamification } from "./hooks/useGamification";
-import { getSettings } from "./services/siteStore";
-
-// CMS site settings (Phase 2B) — applied at load; changes require a refresh
-const siteSettings = getSettings();
-if (typeof document !== "undefined") {
-  document.title = `أكاديمية ${siteSettings.siteName}`;
-  document.documentElement.style.setProperty("--cms-primary", siteSettings.primaryColor);
-  document.documentElement.style.setProperty("--cms-accent", siteSettings.accentColor);
-}
+import { useSiteSettings } from "./hooks/useSiteSettings";
+import { useMediaUrl } from "./hooks/useMediaUrl";
 
 type View = "home" | "lab" | "dashboard" | "leaderboard";
 const LAST_LAB_KEY = "robotech_last_lab_v2";
@@ -35,6 +28,15 @@ const LANG_FLAGS: Record<string, string> = { ar: "🇸🇦", en: "🇬🇧", fr:
 export default function App() {
   const { user, error, login, signup, logout, clearError } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
+  const siteSettings = useSiteSettings();
+  const logoUrl = useMediaUrl(siteSettings.logo.startsWith("http") || siteSettings.logo.startsWith("media://") ? siteSettings.logo : undefined);
+
+  // Apply CMS settings live (updates immediately when the admin saves)
+  useEffect(() => {
+    document.title = `أكاديمية ${siteSettings.siteName}`;
+    document.documentElement.style.setProperty("--cms-primary", siteSettings.primaryColor);
+    document.documentElement.style.setProperty("--cms-accent", siteSettings.accentColor);
+  }, [siteSettings]);
   const { lang, setLang, t } = useLang();
 
   const [view, setView]     = useState<View>("home");
@@ -124,7 +126,7 @@ export default function App() {
   if (isAdminEmail(user.email) || adminRoute) {
     return (
       <Suspense fallback={<div className="page-transition" />}>
-        <AdminApp user={user} onLogout={logout} theme={theme} />
+        <AdminApp user={user} onLogout={logout} theme={theme} onToggleTheme={toggleTheme} />
       </Suspense>
     );
   }
@@ -145,8 +147,8 @@ export default function App() {
         <header className="site-header">
           <button className="logo-btn" onClick={goHome} aria-label={t.home}>
             <div className="logo-icon">
-              {siteSettings.logo.startsWith("http")
-                ? <img src={siteSettings.logo} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
+              {logoUrl
+                ? <img src={logoUrl} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
                 : siteSettings.logo}
             </div>
             <span className="logo-text" style={{ backgroundImage: `linear-gradient(135deg, ${siteSettings.primaryColor}, ${siteSettings.accentColor})` }}>

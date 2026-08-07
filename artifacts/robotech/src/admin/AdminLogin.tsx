@@ -23,7 +23,7 @@ export default function AdminLogin({ onLogin, error, clearError, onBack }: Admin
   };
 
   return (
-    <div className="admin-panel admin-login-page" data-theme="dark">
+    <div className="admin-panel admin-login-page">
       <form className="admin-login-card" onSubmit={submit} dir="rtl">
         <div className="admin-login-icon">🛡️</div>
         <h1>دخول الإدارة</h1>

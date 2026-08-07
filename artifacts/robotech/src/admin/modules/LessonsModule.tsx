@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Lesson, LessonType } from "../../data/labs";
 import { getAllLabs, getLab, addLesson, updateLesson, deleteLesson, moveLesson } from "../../services/labStore";
+import { MediaPicker } from "../components/MediaPicker";
 import { useCmsToast, CmsModal, CmsConfirm, Field, TextInput, LocInput, Toggle, OrderBtns, AddBtn, SaveBtn, EmptyLoc, fillLoc, LabPicker } from "../components/ui";
 
 function emptyLesson(): Lesson {
@@ -13,6 +14,7 @@ export default function LessonsModule() {
   const [tick, setTick] = useState(0);
   const [editing, setEditing] = useState<{ lesson: Lesson; idx: number | null } | null>(null);
   const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const { show, node: toastNode } = useCmsToast();
 
   const lab = getLab(labKey);
@@ -80,13 +82,26 @@ export default function LessonsModule() {
                 </select>
               </Field>
               <Field label="المدة (mm:ss)"><TextInput dir="ltr" value={editing.lesson.duration} onChange={e => setEditing({ ...editing, lesson: { ...editing.lesson, duration: e.target.value } })} placeholder="05:30" /></Field>
-              <Field label="المصدر (src)" hint="مسار MP4 محلي أو رابط"><TextInput dir="ltr" value={editing.lesson.src} onChange={e => setEditing({ ...editing, lesson: { ...editing.lesson, src: e.target.value } })} placeholder="/videos/my-lesson.mp4" /></Field>
+              <Field label="المصدر (src)" hint="من مكتبة الوسائط أو مسار/رابط">
+                <div className="cms-src-row">
+                  <TextInput dir="ltr" value={editing.lesson.src} onChange={e => setEditing({ ...editing, lesson: { ...editing.lesson, src: e.target.value } })} placeholder="/videos/my-lesson.mp4" />
+                  <button type="button" className="cms-add-btn" onClick={() => setPickerOpen(true)}><i className="fas fa-photo-film" /> المكتبة</button>
+                </div>
+              </Field>
             </div>
             <div className="cms-form-foot"><SaveBtn /></div>
           </form>
         </CmsModal>
       )}
 
+      {pickerOpen && editing && (
+        <MediaPicker
+          title="اختر فيديو من المكتبة"
+          categories={["video"]}
+          onSelect={src => { setEditing({ ...editing, lesson: { ...editing.lesson, src, type: "video" } }); setPickerOpen(false); }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
       {confirmIdx !== null && (
         <CmsConfirm
           message={`سيتم حذف الدرس "${lab?.lessons[confirmIdx]?.title.ar}" نهائياً.`}

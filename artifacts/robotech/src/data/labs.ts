@@ -62,6 +62,7 @@ export interface LocalizedLesson {
   src: string;
   duration: string;
   quiz?: LocalizedQuiz[];
+  thumbnail?: string;
 }
 
 export interface LocalizedLab {
@@ -112,6 +113,7 @@ export function localizeLab(lab: LabConfig, lang: Lang): LocalizedLab {
       type: l.type,
       src: l.src,
       duration: l.duration,
+      thumbnail: l.thumbnail,
       quiz: l.quiz?.map(q => ({
         q: q.q[lang],
         options: q.options[lang],

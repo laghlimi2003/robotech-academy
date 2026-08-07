@@ -17,3 +17,10 @@ description: Durable decisions for the robotech artifact (routing, auth, phases)
 - persist() must return failure on localStorage write errors — never confirm a save that didn't happen.
 - Simulator/external buttons in Lab.tsx are gated on non-empty URLs; new labs default simEnabled = has URL.
 - XP_REWARDS in levels.ts merges CMS overrides at module load; changes apply on student page reload (whole app reads CMS data at load, not reactively — accepted until Phase 3).
+
+## Phase 2B-2 media/settings conventions (Aug 2026)
+- Media Library stores blobs in IndexedDB (`mediaStore.ts`, provider-swappable for Supabase in Phase 3); content refers to files as `media://<id>` refs, resolved to object URLs via `useMediaUrl`.
+- Object-URL cache is bounded LRU with revocation + in-flight dedupe; IndexedDB writes resolve only on transaction completion; uploads enforce category↔MIME compatibility (browser `accept` is advisory).
+- Site settings apply live: `saveSettings` dispatches the settings-changed event; UI reads via `useSiteSettings` hook (never module-load reads). Published-only news via `getPublishedNews`.
+- Theme: system preference on first visit, stored key wins; toggle exists in both student nav and admin topbar; never hardcode `data-theme`.
+- Testing gotcha: a logged-in student at `#/admin` sees the access-denied page BY DESIGN — the admin login only shows when nobody is signed in (logout first). Not a bug; don't "fix" it.

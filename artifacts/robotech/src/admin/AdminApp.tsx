@@ -5,6 +5,7 @@ import UsersModule from "./modules/UsersModule";
 import LabsModule from "./modules/LabsModule";
 import LessonsModule from "./modules/LessonsModule";
 import VideosModule from "./modules/VideosModule";
+import MediaModule from "./modules/MediaModule";
 import SimulatorsModule from "./modules/SimulatorsModule";
 import QuizzesModule from "./modules/QuizzesModule";
 import TasksModule from "./modules/TasksModule";
@@ -18,6 +19,7 @@ interface AdminAppProps {
   user: User;
   onLogout: () => void;
   theme: "dark" | "light";
+  onToggleTheme: () => void;
 }
 
 /**
@@ -38,7 +40,7 @@ function moduleFromHash(): string | null {
  * - Access control: only the "admin" role may render anything here.
  * - Hash-based protected routes (#/admin/<module>) without touching student views.
  */
-export default function AdminApp({ user, onLogout, theme }: AdminAppProps) {
+export default function AdminApp({ user, onLogout, theme, onToggleTheme }: AdminAppProps) {
   const role = getRole(user.email);
   const [activeId, setActiveId] = useState<string>(() => moduleFromHash() ?? DEFAULT_MODULE_ID);
 
@@ -87,11 +89,13 @@ export default function AdminApp({ user, onLogout, theme }: AdminAppProps) {
       onNavigate={navigate}
       onLogout={() => { window.location.hash = ""; onLogout(); }}
       theme={theme}
+      onToggleTheme={onToggleTheme}
     >
       {module.id === "users"      ? <UsersModule />
       : module.id === "labs"       ? <LabsModule />
       : module.id === "lessons"    ? <LessonsModule />
       : module.id === "videos"     ? <VideosModule />
+      : module.id === "media"      ? <MediaModule />
       : module.id === "simulators" ? <SimulatorsModule />
       : module.id === "quizzes"    ? <QuizzesModule />
       : module.id === "tasks"      ? <TasksModule />

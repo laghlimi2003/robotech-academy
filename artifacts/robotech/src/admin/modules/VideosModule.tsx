@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { getAllLabs, updateLesson, normalizeVideoSrc } from "../../services/labStore";
+import { isMediaUrl } from "../../services/mediaStore";
+import { MediaPicker } from "../components/MediaPicker";
 import { useCmsToast, CmsModal, Field, TextInput, Toggle, SaveBtn } from "../components/ui";
 
 interface VideoRow {
@@ -31,6 +33,7 @@ function collectVideos(): VideoRow[] {
 export default function VideosModule() {
   const [rows, setRows] = useState(collectVideos);
   const [editing, setEditing] = useState<VideoRow | null>(null);
+  const [picker, setPicker] = useState<"video" | "thumb" | null>(null);
   const { show, node: toastNode } = useCmsToast();
 
   const refresh = () => setRows(collectVideos());
@@ -39,11 +42,12 @@ export default function VideosModule() {
     e.preventDefault();
     if (!editing) return;
     if (!editing.src.trim()) { show("مصدر الفيديو مطلوب", "error"); return; }
-    // Local MP4 stays type "video"; YouTube/Vimeo links become embeds automatically
+    // Library files & local MP4 stay type "video"; YouTube/Vimeo links become embeds automatically
     const norm = normalizeVideoSrc(editing.src);
+    const isLocal = editing.src.trim().startsWith("/") || isMediaUrl(editing.src);
     const res = updateLesson(editing.labKey, editing.lessonIdx, {
-      src: norm.src,
-      type: editing.src.trim().startsWith("/") ? "video" : norm.type,
+      src: isLocal ? editing.src.trim() : norm.src,
+      type: isLocal ? "video" : norm.type,
       thumbnail: editing.thumbnail.trim() || undefined,
       duration: editing.duration.trim(),
     });
@@ -82,11 +86,21 @@ export default function VideosModule() {
       {editing && (
         <CmsModal title={`فيديو: ${editing.title}`} onClose={() => setEditing(null)}>
           <form onSubmit={save} className="cms-form">
-            <Field label="المصدر" hint="مسار محلي مثل ‎/videos/lesson.mp4 أو رابط YouTube / Vimeo / MP4 خارجي">
-              <TextInput dir="ltr" value={editing.src} onChange={e => setEditing({ ...editing, src: e.target.value })} placeholder="/videos/my-lesson.mp4" />
+            <Field label="المصدر" hint="اختر من مكتبة الوسائط، أو ارفع MP4، أو الصق رابط YouTube / Vimeo">
+              <div className="cms-src-row">
+                <TextInput dir="ltr" value={editing.src} onChange={e => setEditing({ ...editing, src: e.target.value })} placeholder="/videos/my-lesson.mp4" />
+                <button type="button" className="cms-add-btn" onClick={() => setPicker("video")}>
+                  <i className="fas fa-photo-film" /> المكتبة
+                </button>
+              </div>
             </Field>
-            <Field label="الصورة المصغّرة (اختياري)" hint="رابط صورة تُعرض قبل تشغيل الفيديو">
-              <TextInput dir="ltr" value={editing.thumbnail} onChange={e => setEditing({ ...editing, thumbnail: e.target.value })} placeholder="https://..." />
+            <Field label="الصورة المصغّرة (اختياري)" hint="من مكتبة الوسائط أو رابط صورة">
+              <div className="cms-src-row">
+                <TextInput dir="ltr" value={editing.thumbnail} onChange={e => setEditing({ ...editing, thumbnail: e.target.value })} placeholder="https://..." />
+                <button type="button" className="cms-add-btn" onClick={() => setPicker("thumb")}>
+                  <i className="fas fa-image" /> المكتبة
+                </button>
+              </div>
             </Field>
             <Field label="المدة (mm:ss)">
               <TextInput dir="ltr" value={editing.duration} onChange={e => setEditing({ ...editing, duration: e.target.value })} placeholder="05:30" />
@@ -94,6 +108,17 @@ export default function VideosModule() {
             <div className="cms-form-foot"><SaveBtn /></div>
           </form>
         </CmsModal>
+      )}
+      {picker && editing && (
+        <MediaPicker
+          title={picker === "video" ? "اختر فيديو من المكتبة" : "اختر صورة مصغّرة"}
+          categories={picker === "video" ? ["video"] : ["image", "logo", "banner"]}
+          onSelect={src => {
+            setEditing(picker === "video" ? { ...editing, src } : { ...editing, thumbnail: src });
+            setPicker(null);
+          }}
+          onClose={() => setPicker(null)}
+        />
       )}
       {toastNode}
     </div>
