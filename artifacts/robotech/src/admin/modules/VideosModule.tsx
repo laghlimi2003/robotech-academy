@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getAllLabs, updateLesson, normalizeVideoSrc } from "../../services/labStore";
 import { isMediaUrl } from "../../services/mediaStore";
-import { MediaPicker } from "../components/MediaPicker";
+import { MediaSourceInput } from "../components/MediaSourceInput";
 import { useCmsToast, CmsModal, Field, TextInput, Toggle, SaveBtn } from "../components/ui";
 
 interface VideoRow {
@@ -33,7 +33,6 @@ function collectVideos(): VideoRow[] {
 export default function VideosModule() {
   const [rows, setRows] = useState(collectVideos);
   const [editing, setEditing] = useState<VideoRow | null>(null);
-  const [picker, setPicker] = useState<"video" | "thumb" | null>(null);
   const { show, node: toastNode } = useCmsToast();
 
   const refresh = () => setRows(collectVideos());
@@ -61,7 +60,7 @@ export default function VideosModule() {
 
   return (
     <div className="cms-module">
-      <p className="cms-note"><i className="fas fa-circle-info" /> يدعم ملفات MP4 محلية (ارفعها إلى <code dir="ltr">public/videos/</code>) وروابط YouTube / Vimeo (تُحوَّل لعرض مضمّن تلقائياً).</p>
+      <p className="cms-note"><i className="fas fa-circle-info" /> ارفع الفيديو مباشرةً أو اختره من مكتبة الوسائط، أو استخدم رابط YouTube / Vimeo (يُحوَّل لعرض مضمّن تلقائياً).</p>
       <div className="admin-table-wrap">
         <table className="admin-table cms-table">
           <thead><tr><th>المختبر</th><th>الدرس</th><th>المصدر</th><th>النوع</th><th>المدة</th><th>الحالة</th><th>تعديل</th></tr></thead>
@@ -86,21 +85,21 @@ export default function VideosModule() {
       {editing && (
         <CmsModal title={`فيديو: ${editing.title}`} onClose={() => setEditing(null)}>
           <form onSubmit={save} className="cms-form">
-            <Field label="المصدر" hint="اختر من مكتبة الوسائط، أو ارفع MP4، أو الصق رابط YouTube / Vimeo">
-              <div className="cms-src-row">
-                <TextInput dir="ltr" value={editing.src} onChange={e => setEditing({ ...editing, src: e.target.value })} placeholder="/videos/my-lesson.mp4" />
-                <button type="button" className="cms-add-btn" onClick={() => setPicker("video")}>
-                  <i className="fas fa-photo-film" /> المكتبة
-                </button>
-              </div>
+            <Field label="مصدر الفيديو" hint="ارفع فيديو، اختر من المكتبة، أو استخدم رابط YouTube / Vimeo">
+              <MediaSourceInput
+                kind="video"
+                value={editing.src}
+                onChange={src => setEditing({ ...editing, src })}
+                onError={msg => show(msg, "error")}
+              />
             </Field>
-            <Field label="الصورة المصغّرة (اختياري)" hint="من مكتبة الوسائط أو رابط صورة">
-              <div className="cms-src-row">
-                <TextInput dir="ltr" value={editing.thumbnail} onChange={e => setEditing({ ...editing, thumbnail: e.target.value })} placeholder="https://..." />
-                <button type="button" className="cms-add-btn" onClick={() => setPicker("thumb")}>
-                  <i className="fas fa-image" /> المكتبة
-                </button>
-              </div>
+            <Field label="الصورة المصغّرة (اختياري)" hint="تُعرض كغلاف قبل تشغيل الفيديو">
+              <MediaSourceInput
+                kind="image"
+                value={editing.thumbnail}
+                onChange={thumbnail => setEditing({ ...editing, thumbnail })}
+                onError={msg => show(msg, "error")}
+              />
             </Field>
             <Field label="المدة (mm:ss)">
               <TextInput dir="ltr" value={editing.duration} onChange={e => setEditing({ ...editing, duration: e.target.value })} placeholder="05:30" />
@@ -108,17 +107,6 @@ export default function VideosModule() {
             <div className="cms-form-foot"><SaveBtn /></div>
           </form>
         </CmsModal>
-      )}
-      {picker && editing && (
-        <MediaPicker
-          title={picker === "video" ? "اختر فيديو من المكتبة" : "اختر صورة مصغّرة"}
-          categories={picker === "video" ? ["video"] : ["image", "logo", "banner"]}
-          onSelect={src => {
-            setEditing(picker === "video" ? { ...editing, src } : { ...editing, thumbnail: src });
-            setPicker(null);
-          }}
-          onClose={() => setPicker(null)}
-        />
       )}
       {toastNode}
     </div>

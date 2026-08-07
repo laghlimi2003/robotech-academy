@@ -3459,3 +3459,16 @@ html[dir="ltr"] body { direction: ltr; }
 .news-card-body h4 { margin: 0; font-size: 16px; font-weight: 900; }
 .news-card-body p { margin: 0; font-size: 13px; opacity: .75; line-height: 1.7; white-space: pre-line; }
 .news-card-date { font-size: 11px; opacity: .5; display: flex; align-items: center; gap: 6px; }
+
+/* Phase 2B-2b: button-driven media source selector */
+.cms-media-src { display: flex; flex-direction: column; gap: 10px; }
+.cms-media-src-status {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border: 1px dashed rgba(255,255,255,0.18); border-radius: 12px; font-size: 13px;
+}
+[data-theme="light"] .cms-media-src-status { border-color: rgba(0,0,0,0.18); }
+.cms-media-src-status.empty { opacity: .6; }
+.cms-media-src-status span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: end; }
+.cms-media-src-status .cms-icon-btn { flex: none; }
+.cms-media-src-preview { width: 44px; height: 32px; object-fit: cover; border-radius: 6px; flex: none; }
+.cms-media-src-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }

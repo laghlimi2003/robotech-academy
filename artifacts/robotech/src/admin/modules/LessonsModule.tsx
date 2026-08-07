@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Lesson, LessonType } from "../../data/labs";
 import { getAllLabs, getLab, addLesson, updateLesson, deleteLesson, moveLesson } from "../../services/labStore";
-import { MediaPicker } from "../components/MediaPicker";
+import { MediaSourceInput } from "../components/MediaSourceInput";
 import { useCmsToast, CmsModal, CmsConfirm, Field, TextInput, LocInput, Toggle, OrderBtns, AddBtn, SaveBtn, EmptyLoc, fillLoc, LabPicker } from "../components/ui";
 
 function emptyLesson(): Lesson {
@@ -14,7 +14,6 @@ export default function LessonsModule() {
   const [tick, setTick] = useState(0);
   const [editing, setEditing] = useState<{ lesson: Lesson; idx: number | null } | null>(null);
   const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const { show, node: toastNode } = useCmsToast();
 
   const lab = getLab(labKey);
@@ -74,7 +73,7 @@ export default function LessonsModule() {
           <form onSubmit={save} className="cms-form">
             <LocInput label="عنوان الدرس" requiredAr value={editing.lesson.title} onChange={v => setEditing({ ...editing, lesson: { ...editing.lesson, title: v } })} />
             <LocInput label="الوصف" multiline value={editing.lesson.description} onChange={v => setEditing({ ...editing, lesson: { ...editing.lesson, description: v } })} />
-            <div className="cms-grid-3">
+            <div className="cms-grid-2">
               <Field label="النوع">
                 <select className="cms-input cms-select" value={editing.lesson.type} onChange={e => setEditing({ ...editing, lesson: { ...editing.lesson, type: e.target.value as LessonType } })}>
                   <option value="video">فيديو</option>
@@ -82,26 +81,28 @@ export default function LessonsModule() {
                 </select>
               </Field>
               <Field label="المدة (mm:ss)"><TextInput dir="ltr" value={editing.lesson.duration} onChange={e => setEditing({ ...editing, lesson: { ...editing.lesson, duration: e.target.value } })} placeholder="05:30" /></Field>
-              <Field label="المصدر (src)" hint="من مكتبة الوسائط أو مسار/رابط">
-                <div className="cms-src-row">
-                  <TextInput dir="ltr" value={editing.lesson.src} onChange={e => setEditing({ ...editing, lesson: { ...editing.lesson, src: e.target.value } })} placeholder="/videos/my-lesson.mp4" />
-                  <button type="button" className="cms-add-btn" onClick={() => setPickerOpen(true)}><i className="fas fa-photo-film" /> المكتبة</button>
-                </div>
-              </Field>
             </div>
+            <Field label="مصدر الفيديو" hint="ارفع فيديو، اختر من المكتبة، أو استخدم رابط YouTube / Vimeo">
+              <MediaSourceInput
+                kind="video"
+                value={editing.lesson.src}
+                onChange={src => setEditing({ ...editing, lesson: { ...editing.lesson, src, ...(src && !src.startsWith("http") ? { type: "video" as LessonType } : {}) } })}
+                onError={msg => show(msg, "error")}
+              />
+            </Field>
+            <Field label="الصورة المصغّرة (اختياري)" hint="تُعرض كغلاف قبل تشغيل الفيديو">
+              <MediaSourceInput
+                kind="image"
+                value={editing.lesson.thumbnail ?? ""}
+                onChange={thumbnail => setEditing({ ...editing, lesson: { ...editing.lesson, thumbnail: thumbnail || undefined } })}
+                onError={msg => show(msg, "error")}
+              />
+            </Field>
             <div className="cms-form-foot"><SaveBtn /></div>
           </form>
         </CmsModal>
       )}
 
-      {pickerOpen && editing && (
-        <MediaPicker
-          title="اختر فيديو من المكتبة"
-          categories={["video"]}
-          onSelect={src => { setEditing({ ...editing, lesson: { ...editing.lesson, src, type: "video" } }); setPickerOpen(false); }}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
       {confirmIdx !== null && (
         <CmsConfirm
           message={`سيتم حذف الدرس "${lab?.lessons[confirmIdx]?.title.ar}" نهائياً.`}
