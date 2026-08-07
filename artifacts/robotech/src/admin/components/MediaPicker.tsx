@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  listMedia, uploadMedia, mediaUrl, formatSize,
+  listMedia, uploadMedia, mediaUrl, formatSize, inferCategory, ATTACHMENT_CATEGORIES,
   type MediaItem, type MediaCategory,
 } from "../../services/mediaStore";
 import { MediaThumb } from "../modules/MediaModule";
@@ -25,16 +25,28 @@ export function MediaPicker({ categories, title, onSelect, onClose }: {
   const refresh = () => { listMedia().then(setItems); };
   useEffect(refresh, []);
 
+  const isAttachmentMode = categories.every(c => (ATTACHMENT_CATEGORIES as readonly string[]).includes(c));
   const accept = categories.includes("video") && categories.length === 1
     ? "video/mp4"
     : categories.some(c => c === "image" || c === "logo" || c === "banner") && !categories.includes("video")
       ? "image/*"
-      : "image/*,video/mp4,application/pdf";
+      : isAttachmentMode
+        ? ".pdf,.doc,.docx,.ppt,.pptx,.zip"
+        : "image/*,video/mp4,application/pdf";
 
   const onUpload = async (files: FileList | null) => {
     if (!files?.length) return;
+    const file = files[0];
+    // HTML `accept` is advisory only — enforce the allowed categories here.
+    if (!categories.includes(inferCategory(file.type, file.name))) {
+      if (fileRef.current) fileRef.current.value = "";
+      setError(isAttachmentMode
+        ? "نوع الملف غير مدعوم كمرفق — المسموح: PDF / Word / PowerPoint / ZIP"
+        : "نوع الملف لا يطابق التصنيف المطلوب هنا");
+      return;
+    }
     setBusy(true); setError("");
-    const res = await uploadMedia(files[0], categories.length === 1 ? categories[0] : undefined);
+    const res = await uploadMedia(file, categories.length === 1 ? categories[0] : undefined);
     setBusy(false);
     if (fileRef.current) fileRef.current.value = "";
     if (!res.ok) { setError(res.error); return; }

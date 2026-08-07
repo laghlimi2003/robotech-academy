@@ -3472,3 +3472,29 @@ html[dir="ltr"] body { direction: ltr; }
 .cms-media-src-status .cms-icon-btn { flex: none; }
 .cms-media-src-preview { width: 44px; height: 32px; object-fit: cover; border-radius: 6px; flex: none; }
 .cms-media-src-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Phase 2B-3: media library sort/progress, lesson attachments */
+.cms-media-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.cms-upload-progress { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.cms-upload-progress-head { display: flex; justify-content: space-between; font-size: 12px; opacity: .85; }
+.cms-progress-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
+[data-theme="light"] .cms-progress-track { background: rgba(0,0,0,0.08); }
+.cms-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#667eea,#a55eea); transition: width .15s ease; }
+
+.cms-attach-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cms-attach-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+}
+[data-theme="light"] .cms-attach-item { border-color: rgba(0,0,0,0.12); }
+.cms-attach-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end; }
+
+.lesson-attachments { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+.lesson-attachment {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border-radius: 10px; font-size: 13px; font-weight: 800; text-decoration: none;
+  color: inherit; background: rgba(124,107,250,0.12); border: 1px solid rgba(124,107,250,0.35);
+  transition: background .15s;
+}
+.lesson-attachment:hover { background: rgba(124,107,250,0.25); }
+.lesson-attachment span { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

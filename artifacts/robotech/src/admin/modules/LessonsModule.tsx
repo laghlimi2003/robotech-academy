@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Lesson, LessonType } from "../../data/labs";
 import { getAllLabs, getLab, addLesson, updateLesson, deleteLesson, moveLesson } from "../../services/labStore";
 import { MediaSourceInput } from "../components/MediaSourceInput";
+import { AttachmentsInput } from "../components/AttachmentsInput";
 import { useCmsToast, CmsModal, CmsConfirm, Field, TextInput, LocInput, Toggle, OrderBtns, AddBtn, SaveBtn, EmptyLoc, fillLoc, LabPicker } from "../components/ui";
 
 function emptyLesson(): Lesson {
@@ -95,6 +96,13 @@ export default function LessonsModule() {
                 kind="image"
                 value={editing.lesson.thumbnail ?? ""}
                 onChange={thumbnail => setEditing({ ...editing, lesson: { ...editing.lesson, thumbnail: thumbnail || undefined } })}
+                onError={msg => show(msg, "error")}
+              />
+            </Field>
+            <Field label="المرفقات (اختياري)" hint="ملفات PDF / Word / PowerPoint / ZIP يحمّلها الطالب من داخل الدرس">
+              <AttachmentsInput
+                value={editing.lesson.attachments ?? []}
+                onChange={attachments => setEditing({ ...editing, lesson: { ...editing.lesson, attachments: attachments.length ? attachments : undefined } })}
                 onError={msg => show(msg, "error")}
               />
             </Field>

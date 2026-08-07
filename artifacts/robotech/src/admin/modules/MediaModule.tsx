@@ -4,17 +4,51 @@ import {
   CATEGORY_LABELS, type MediaItem, type MediaCategory, mediaUrl,
 } from "../../services/mediaStore";
 import { useMediaUrl } from "../../hooks/useMediaUrl";
+import { getAllLabs } from "../../services/labStore";
 import { useCmsToast, CmsModal, CmsConfirm, Field, TextInput, SaveBtn } from "../components/ui";
 
-const FILTERS: { value: MediaCategory | "all"; label: string }[] = [
-  { value: "all", label: "الكل" },
-  { value: "image", label: "صور" },
-  { value: "video", label: "فيديوهات" },
-  { value: "pdf", label: "PDF" },
-  { value: "document", label: "مستندات" },
-  { value: "logo", label: "شعارات" },
-  { value: "banner", label: "بانرات" },
+/** Names of lessons that reference this media file (src / thumbnail / attachments). */
+function findLessonRefs(id: string): string[] {
+  const ref = mediaUrl(id);
+  const names: string[] = [];
+  for (const lab of getAllLabs())
+    for (const les of lab.lessons)
+      if (les.src === ref || les.thumbnail === ref || les.attachments?.some(a => a.src === ref))
+        names.push(les.title.ar);
+  return names;
+}
+
+function deleteWarning(id: string): string {
+  const refs = findLessonRefs(id);
+  if (refs.length === 0) return "سيتم حذف الملف نهائياً. إذا كان مستخدماً في إعداد فسيتوقف عرضه.";
+  return `تنبيه: هذا الملف مستخدم في ${refs.length > 1 ? "الدروس التالية" : "الدرس التالي"}: ${refs.slice(0, 3).join("، ")}${refs.length > 3 ? "…" : ""}. حذفه سيوقف عرضه لدى الطلاب.`;
+}
+
+/* Filter groups: each chip covers one or more stored categories */
+const FILTERS: { value: string; label: string; cats: MediaCategory[] | null }[] = [
+  { value: "all",        label: "الكل",       cats: null },
+  { value: "video",      label: "فيديوهات",   cats: ["video"] },
+  { value: "image",      label: "صور",        cats: ["image", "logo", "banner"] },
+  { value: "pdf",        label: "PDF",        cats: ["pdf"] },
+  { value: "word",       label: "Word",       cats: ["word"] },
+  { value: "powerpoint", label: "PowerPoint", cats: ["powerpoint"] },
+  { value: "zip",        label: "ZIP",        cats: ["zip"] },
+  { value: "audio",      label: "صوتيات",     cats: ["audio"] },
+  { value: "other",      label: "أخرى",       cats: ["other", "document"] },
 ];
+
+type SortKey = "newest" | "oldest" | "name" | "size";
+const SORTS: { value: SortKey; label: string }[] = [
+  { value: "newest", label: "الأحدث أولاً" },
+  { value: "oldest", label: "الأقدم أولاً" },
+  { value: "name",   label: "الاسم" },
+  { value: "size",   label: "الحجم" },
+];
+
+export const CATEGORY_ICONS: Partial<Record<MediaCategory, string>> = {
+  pdf: "fa-file-pdf", word: "fa-file-word", powerpoint: "fa-file-powerpoint",
+  zip: "fa-file-zipper", audio: "fa-file-audio", document: "fa-file-lines", other: "fa-file",
+};
 
 export function MediaThumb({ item }: { item: MediaItem }) {
   const url = useMediaUrl(mediaUrl(item.id));
@@ -22,21 +56,29 @@ export function MediaThumb({ item }: { item: MediaItem }) {
     return <img src={url} alt={item.name} className="cms-media-thumb" loading="lazy" />;
   if (item.category === "video" && url)
     return <video src={url} className="cms-media-thumb" muted preload="metadata" />;
+  if (item.category === "audio" && url)
+    return (
+      <div className="cms-media-thumb cms-media-thumb-icon">
+        <audio src={url} controls preload="metadata" style={{ width: "100%", maxWidth: 160 }} />
+      </div>
+    );
   return (
     <div className="cms-media-thumb cms-media-thumb-icon">
-      <i className={`fas ${item.category === "pdf" ? "fa-file-pdf" : "fa-file-lines"}`} />
+      <i className={`fas ${CATEGORY_ICONS[item.category] ?? "fa-file-lines"}`} />
     </div>
   );
 }
 
 export default function MediaModule() {
   const [items, setItems] = useState<MediaItem[]>([]);
-  const [filter, setFilter] = useState<MediaCategory | "all">("all");
+  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortKey>("newest");
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [uploadCat, setUploadCat] = useState<MediaCategory | "">("");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ name: string; pct: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { show, node: toastNode } = useCmsToast();
 
@@ -48,10 +90,12 @@ export default function MediaModule() {
     setBusy(true);
     let okCount = 0;
     for (const f of Array.from(files)) {
-      const res = await uploadMedia(f, uploadCat || undefined);
+      setProgress({ name: f.name, pct: 0 });
+      const res = await uploadMedia(f, uploadCat || undefined, pct => setProgress({ name: f.name, pct }));
       if (res.ok) okCount++;
       else show(`${f.name}: ${res.error}`, "error");
     }
+    setProgress(null);
     if (okCount) show(`تم رفع ${okCount} ملف${okCount > 1 ? "ات" : ""} بنجاح`);
     setBusy(false);
     if (fileRef.current) fileRef.current.value = "";
@@ -75,9 +119,19 @@ export default function MediaModule() {
     refresh();
   };
 
-  const visible = items.filter(i =>
-    (filter === "all" || i.category === filter) &&
-    (!search.trim() || i.name.toLowerCase().includes(search.trim().toLowerCase())));
+  const activeCats = FILTERS.find(f => f.value === filter)?.cats ?? null;
+  const visible = items
+    .filter(i =>
+      (!activeCats || activeCats.includes(i.category)) &&
+      (!search.trim() || i.name.toLowerCase().includes(search.trim().toLowerCase())))
+    .sort((a, b) => {
+      switch (sort) {
+        case "newest": return b.createdAt.localeCompare(a.createdAt);
+        case "oldest": return a.createdAt.localeCompare(b.createdAt);
+        case "name":   return a.name.localeCompare(b.name, "ar");
+        case "size":   return b.size - a.size;
+      }
+    });
 
   return (
     <div className="cms-module">
@@ -90,16 +144,24 @@ export default function MediaModule() {
               {(Object.keys(CATEGORY_LABELS) as MediaCategory[]).map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
             </select>
           </Field>
-          <Field label="الملفات" hint="صور، MP4، PDF، مستندات — حتى 60MB للملف">
+          <Field label="الملفات" hint="صور، فيديو، صوت، PDF، Word، PowerPoint، ZIP وغيرها">
             <input
               ref={fileRef} type="file" multiple className="cms-input"
-              accept="image/*,video/mp4,application/pdf,.doc,.docx,.txt"
+              accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.7z,.txt,.odt,.odp"
               disabled={busy}
               onChange={e => onUpload(e.target.files)}
             />
           </Field>
         </div>
-        {busy && <p className="cms-note"><i className="fas fa-spinner fa-spin" /> جارٍ الرفع...</p>}
+        {progress && (
+          <div className="cms-upload-progress">
+            <div className="cms-upload-progress-head">
+              <span dir="ltr">{progress.name}</span>
+              <strong dir="ltr">{progress.pct}%</strong>
+            </div>
+            <div className="cms-progress-track"><div className="cms-progress-fill" style={{ width: `${progress.pct}%` }} /></div>
+          </div>
+        )}
       </div>
 
       <div className="cms-module-head">
@@ -108,7 +170,12 @@ export default function MediaModule() {
             <button key={f.value} className={`cms-chip${filter === f.value ? " active" : ""}`} onClick={() => setFilter(f.value)}>{f.label}</button>
           ))}
         </div>
-        <TextInput placeholder="🔍 بحث بالاسم..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 240 }} />
+        <div className="cms-media-toolbar">
+          <select className="cms-input cms-select" value={sort} onChange={e => setSort(e.target.value as SortKey)} style={{ maxWidth: 160 }}>
+            {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <TextInput placeholder="🔍 بحث بالاسم..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 240 }} />
+        </div>
       </div>
 
       {visible.length === 0 ? (
@@ -141,7 +208,7 @@ export default function MediaModule() {
       )}
       {confirmId && (
         <CmsConfirm
-          message="سيتم حذف الملف نهائياً. إذا كان مستخدماً في درس أو إعداد فسيتوقف عرضه."
+          message={deleteWarning(confirmId)}
           onYes={() => doDelete(confirmId)}
           onNo={() => setConfirmId(null)}
         />

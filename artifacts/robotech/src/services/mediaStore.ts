@@ -8,7 +8,9 @@
  * the app is unaffected.
  */
 
-export type MediaCategory = "image" | "video" | "pdf" | "document" | "logo" | "banner";
+export type MediaCategory =
+  | "image" | "video" | "pdf" | "document" | "logo" | "banner"   // Phase 2B-2 originals (kept for stored records)
+  | "word" | "powerpoint" | "zip" | "audio" | "other";           // Phase 2B-3 additions
 
 export interface MediaItem {
   id: string;
@@ -70,19 +72,29 @@ function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequ
 export function inferCategory(mime: string, name: string): MediaCategory {
   if (mime.startsWith("image/")) return "image";
   if (mime.startsWith("video/")) return "video";
+  if (mime.startsWith("audio/") || /\.(mp3|wav|ogg|m4a)$/i.test(name)) return "audio";
   if (mime === "application/pdf" || /\.pdf$/i.test(name)) return "pdf";
-  return "document";
+  if (/\.(docx?|odt)$/i.test(name) || mime.includes("wordprocessingml") || mime === "application/msword") return "word";
+  if (/\.(pptx?|odp)$/i.test(name) || mime.includes("presentationml") || mime === "application/vnd.ms-powerpoint") return "powerpoint";
+  if (/\.(zip|rar|7z)$/i.test(name) || mime === "application/zip" || mime === "application/x-zip-compressed") return "zip";
+  return "other";
 }
 
 export const CATEGORY_LABELS: Record<MediaCategory, string> = {
   image: "صورة", video: "فيديو", pdf: "PDF", document: "مستند", logo: "شعار", banner: "بانر",
+  word: "Word", powerpoint: "PowerPoint", zip: "ZIP", audio: "صوت", other: "أخرى",
 };
+
+/** Categories usable as downloadable lesson attachments. */
+export const ATTACHMENT_CATEGORIES: MediaCategory[] = ["pdf", "word", "powerpoint", "zip", "document"];
 
 /* ── Public API ────────────────────────────────────────────── */
 
 export type MediaResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
-const MAX_SIZE = 60 * 1024 * 1024; // 60MB per file (browser storage limit safeguard)
+// Generous ceiling — IndexedDB handles large blobs; the real limit is the
+// browser's storage quota, which is reported explicitly on failure.
+export const MAX_SIZE = 1024 * 1024 * 1024; // 1GB per file
 
 export async function listMedia(): Promise<MediaItem[]> {
   try {
@@ -102,13 +114,36 @@ function categoryAccepts(category: MediaCategory, mime: string, name: string): b
       return mime.startsWith("video/") || /\.(mp4|webm)$/i.test(name);
     case "pdf":
       return mime === "application/pdf" || /\.pdf$/i.test(name);
-    case "document":
+    case "audio":
+      return mime.startsWith("audio/") || /\.(mp3|wav|ogg|m4a)$/i.test(name);
+    case "word":
+      return /\.(docx?|odt)$/i.test(name) || mime.includes("wordprocessingml") || mime === "application/msword";
+    case "powerpoint":
+      return /\.(pptx?|odp)$/i.test(name) || mime.includes("presentationml") || mime === "application/vnd.ms-powerpoint";
+    case "zip":
+      return /\.(zip|rar|7z)$/i.test(name) || mime === "application/zip" || mime === "application/x-zip-compressed";
+    case "document": case "other":
       return true;
   }
 }
 
-export async function uploadMedia(file: File, category?: MediaCategory): Promise<MediaResult<MediaItem>> {
-  if (file.size > MAX_SIZE) return { ok: false, error: "حجم الملف يتجاوز الحد الأقصى (60MB)" };
+/** Read a file into memory, reporting progress 0-100. */
+function readWithProgress(file: File, onProgress?: (pct: number) => void): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 90)); };
+    reader.onload = () => resolve(new Blob([reader.result as ArrayBuffer], { type: file.type || "application/octet-stream" }));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+export async function uploadMedia(
+  file: File,
+  category?: MediaCategory,
+  onProgress?: (pct: number) => void,
+): Promise<MediaResult<MediaItem>> {
+  if (file.size > MAX_SIZE) return { ok: false, error: "حجم الملف يتجاوز الحد الأقصى (1GB)" };
   if (file.size === 0) return { ok: false, error: "الملف فارغ" };
   if (category && !categoryAccepts(category, file.type, file.name))
     return { ok: false, error: `نوع الملف "${file.name}" لا يطابق التصنيف "${CATEGORY_LABELS[category]}"` };
@@ -121,10 +156,20 @@ export async function uploadMedia(file: File, category?: MediaCategory): Promise
     createdAt: new Date().toISOString(),
   };
   try {
-    await tx("readwrite", s => s.put({ ...item, blob: file } satisfies MediaRecord));
+    onProgress?.(0);
+    const blob = await readWithProgress(file, onProgress);
+    onProgress?.(95);
+    await tx("readwrite", s => s.put({ ...item, blob } satisfies MediaRecord));
+    onProgress?.(100);
     return { ok: true, data: item };
-  } catch {
-    return { ok: false, error: "فشل حفظ الملف — قد تكون مساحة التخزين ممتلئة" };
+  } catch (err) {
+    const quota = err instanceof DOMException && (err.name === "QuotaExceededError" || err.name === "NS_ERROR_DOM_QUOTA_REACHED");
+    return {
+      ok: false,
+      error: quota
+        ? `الملف "${file.name}" (${formatSize(file.size)}) يتجاوز مساحة التخزين المتاحة في المتصفح — احذف ملفات قديمة أو استخدم ملفاً أصغر`
+        : "فشل حفظ الملف — أعد المحاولة",
+    };
   }
 }
 

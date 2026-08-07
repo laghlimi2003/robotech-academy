@@ -23,6 +23,13 @@ export interface Lesson {
   /* CMS fields (Phase 2B) */
   thumbnail?: string;
   hidden?: boolean;
+  /** Downloadable files (PDF/Word/PowerPoint/ZIP) — `media://` refs or URLs */
+  attachments?: LessonAttachment[];
+}
+
+export interface LessonAttachment {
+  name: string;
+  src: string;
 }
 
 export interface LabConfig {
@@ -63,6 +70,7 @@ export interface LocalizedLesson {
   duration: string;
   quiz?: LocalizedQuiz[];
   thumbnail?: string;
+  attachments?: LessonAttachment[];
 }
 
 export interface LocalizedLab {
@@ -114,6 +122,7 @@ export function localizeLab(lab: LabConfig, lang: Lang): LocalizedLab {
       src: l.src,
       duration: l.duration,
       thumbnail: l.thumbnail,
+      attachments: l.attachments,
       quiz: l.quiz?.map(q => ({
         q: q.q[lang],
         options: q.options[lang],

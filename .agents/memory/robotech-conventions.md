@@ -24,3 +24,9 @@ description: Durable decisions for the robotech artifact (routing, auth, phases)
 - Site settings apply live: `saveSettings` dispatches the settings-changed event; UI reads via `useSiteSettings` hook (never module-load reads). Published-only news via `getPublishedNews`.
 - Theme: system preference on first visit, stored key wins; toggle exists in both student nav and admin topbar; never hardcode `data-theme`.
 - Testing gotcha: a logged-in student at `#/admin` sees the access-denied page BY DESIGN — the admin login only shows when nobody is signed in (logout first). Not a bug; don't "fix" it.
+
+## Phase 2B-3 conventions (Aug 2026)
+- Admin modals (`CmsModal`/`CmsConfirm`) render via `createPortal(document.body)`. **Why:** pickers open from inside `Field`'s `<label>` and the lesson `<form>`; rendering nested overlays in place broke selection (chip never appeared). Keep any new overlay portal-based.
+- Lesson attachments (`Lesson.attachments: {name, src}[]`) allow only `ATTACHMENT_CATEGORIES` (pdf/word/powerpoint/zip/document); enforce with `inferCategory` at upload AND picker-upload — `accept` is advisory.
+- Media library filter chips are category GROUPS (e.g. صور = image+logo+banner, أخرى = other+document); upload cap is 1GB best-effort (full in-memory read; real limit = tab memory/IDB quota — quota errors show a clear Arabic message).
+- Deleting a media file warns which lessons reference it (src/thumbnail/attachments scan) but does not block deletion.

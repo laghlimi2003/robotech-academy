@@ -8,6 +8,19 @@ import Quiz from "../components/Quiz";
 import Certificate from "../components/Certificate";
 import type { T, Lang } from "../hooks/useLang";
 import { useMediaUrl } from "../hooks/useMediaUrl";
+import type { LessonAttachment } from "../data/labs";
+
+/** Downloadable lesson attachment — resolves media:// refs to object URLs. */
+function AttachmentLink({ att }: { att: LessonAttachment }) {
+  const url = useMediaUrl(att.src);
+  if (!url) return null;
+  return (
+    <a className="lesson-attachment" href={url} download={att.name} target="_blank" rel="noopener noreferrer">
+      <i className="fas fa-file-arrow-down" />
+      <span dir="ltr">{att.name}</span>
+    </a>
+  );
+}
 import type { useGamification } from "../hooks/useGamification";
 
 type Gam = ReturnType<typeof useGamification>;
@@ -361,6 +374,13 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                           )}
                         </div>
                         <p className="lesson-desc">{les.description}</p>
+
+                        {/* ── Attachments ── */}
+                        {les.attachments && les.attachments.length > 0 && (
+                          <div className="lesson-attachments">
+                            {les.attachments.map((a, ai) => <AttachmentLink key={`${a.src}-${ai}`} att={a} />)}
+                          </div>
+                        )}
 
                         {/* ── Quiz / Completion area ── */}
                         <div className="lesson-actions">

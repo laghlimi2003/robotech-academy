@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Localized } from "../../data/labs";
 
 /* ── Toast (success / error messages) ─────────────────────── */
@@ -26,7 +27,10 @@ export function useCmsToast() {
 export function CmsModal({ title, onClose, children, wide }: {
   title: string; onClose: () => void; children: React.ReactNode; wide?: boolean;
 }) {
-  return (
+  // Portal to <body>: modals may be opened from inside a <form> or <label>
+  // (e.g. media picker inside a Field) — rendering in place lets label click
+  // forwarding and form semantics interfere with the modal's controls.
+  return createPortal(
     <div className="admin-overlay" onClick={onClose}>
       <div className={`cms-modal${wide ? " wide" : ""}`} onClick={e => e.stopPropagation()}>
         <div className="cms-modal-head">
@@ -35,14 +39,15 @@ export function CmsModal({ title, onClose, children, wide }: {
         </div>
         <div className="cms-modal-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 /* ── Confirm dialog ────────────────────────────────────────── */
 
 export function CmsConfirm({ message, onYes, onNo }: { message: string; onYes: () => void; onNo: () => void }) {
-  return (
+  return createPortal(
     <div className="admin-overlay" onClick={onNo}>
       <div className="admin-confirm" onClick={e => e.stopPropagation()}>
         <i className="fas fa-triangle-exclamation" style={{ color: "#fa5252", fontSize: 32 }} />
@@ -52,7 +57,8 @@ export function CmsConfirm({ message, onYes, onNo }: { message: string; onYes: (
           <button className="admin-confirm-delete" onClick={onYes}><i className="fas fa-trash" /> تأكيد</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
