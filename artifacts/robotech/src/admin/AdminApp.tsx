@@ -2,6 +2,14 @@ import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import ModulePlaceholder from "./ModulePlaceholder";
 import UsersModule from "./modules/UsersModule";
+import LabsModule from "./modules/LabsModule";
+import LessonsModule from "./modules/LessonsModule";
+import VideosModule from "./modules/VideosModule";
+import SimulatorsModule from "./modules/SimulatorsModule";
+import QuizzesModule from "./modules/QuizzesModule";
+import TasksModule from "./modules/TasksModule";
+import NewsModule from "./modules/NewsModule";
+import SettingsModule from "./modules/SettingsModule";
 import { DEFAULT_MODULE_ID, findModule } from "./modules";
 import { getRole, canAccessAdmin } from "./roles";
 import type { User } from "../hooks/useAuth";
@@ -80,7 +88,16 @@ export default function AdminApp({ user, onLogout, theme }: AdminAppProps) {
       onLogout={() => { window.location.hash = ""; onLogout(); }}
       theme={theme}
     >
-      {module.id === "users" ? <UsersModule /> : <ModulePlaceholder module={module} />}
+      {module.id === "users"      ? <UsersModule />
+      : module.id === "labs"       ? <LabsModule />
+      : module.id === "lessons"    ? <LessonsModule />
+      : module.id === "videos"     ? <VideosModule />
+      : module.id === "simulators" ? <SimulatorsModule />
+      : module.id === "quizzes"    ? <QuizzesModule />
+      : module.id === "tasks"      ? <TasksModule />
+      : module.id === "news"       ? <NewsModule />
+      : module.id === "settings"   ? <SettingsModule />
+      : <ModulePlaceholder module={module} />}
     </AdminLayout>
   );
 }

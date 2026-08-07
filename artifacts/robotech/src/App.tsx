@@ -17,6 +17,15 @@ import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
 import { useReminder, requestNotificationPermission } from "./hooks/useReminder";
 import { useGamification } from "./hooks/useGamification";
+import { getSettings } from "./services/siteStore";
+
+// CMS site settings (Phase 2B) — applied at load; changes require a refresh
+const siteSettings = getSettings();
+if (typeof document !== "undefined") {
+  document.title = `أكاديمية ${siteSettings.siteName}`;
+  document.documentElement.style.setProperty("--cms-primary", siteSettings.primaryColor);
+  document.documentElement.style.setProperty("--cms-accent", siteSettings.accentColor);
+}
 
 type View = "home" | "lab" | "dashboard" | "leaderboard";
 const LAST_LAB_KEY = "robotech_last_lab_v2";
@@ -135,8 +144,14 @@ export default function App() {
       {(view === "home" || view === "dashboard" || view === "leaderboard") && (
         <header className="site-header">
           <button className="logo-btn" onClick={goHome} aria-label={t.home}>
-            <div className="logo-icon">🤖</div>
-            <span className="logo-text">RoboTech</span>
+            <div className="logo-icon">
+              {siteSettings.logo.startsWith("http")
+                ? <img src={siteSettings.logo} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
+                : siteSettings.logo}
+            </div>
+            <span className="logo-text" style={{ backgroundImage: `linear-gradient(135deg, ${siteSettings.primaryColor}, ${siteSettings.accentColor})` }}>
+              {siteSettings.siteName}
+            </span>
           </button>
 
           <nav>

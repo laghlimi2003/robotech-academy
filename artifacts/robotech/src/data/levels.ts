@@ -49,15 +49,19 @@ export function titleForLevel(level: number, lang: Lang): string {
   return chosen[lang];
 }
 
-// XP rewards
-export const XP_REWARDS = {
+// XP rewards — defaults, overridable from the Admin CMS (quiz points / task rewards)
+import { getXpOverrides } from "../services/siteStore";
+
+const XP_DEFAULTS = {
   lesson:         50,
   quizPassBase:   100,
   quizPercentBonus: 5,   // per percentage point above 70%
   task:           30,
   labComplete:    500,
   dailyStreak:    20,
-} as const;
+};
+
+export const XP_REWARDS: typeof XP_DEFAULTS = { ...XP_DEFAULTS, ...getXpOverrides() };
 
 export function quizXpFor(percent: number): number {
   const bonus = Math.max(0, percent - 70) * XP_REWARDS.quizPercentBonus;

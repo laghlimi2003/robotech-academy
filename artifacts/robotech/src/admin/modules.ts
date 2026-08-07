@@ -14,15 +14,15 @@ export interface AdminModule {
 export const ADMIN_MODULES: AdminModule[] = [
   { id: "dashboard",    icon: "fa-gauge-high",      title: "لوحة المعلومات", desc: "نظرة عامة على نشاط الأكاديمية والإحصائيات الرئيسية.", placeholder: true },
   { id: "users",        icon: "fa-users",           title: "المستخدمون",     desc: "إدارة حسابات الطلاب: البحث، الإحصائيات، والحذف.",     placeholder: false },
-  { id: "labs",         icon: "fa-flask",           title: "المختبرات",      desc: "إنشاء وتعديل مختبرات التعلم (Arduino، Scratch، ...).", placeholder: true },
-  { id: "lessons",      icon: "fa-book-open",       title: "الدروس",         desc: "إدارة محتوى الدروس داخل كل مختبر.",                   placeholder: true },
-  { id: "videos",       icon: "fa-video",           title: "الفيديوهات",     desc: "رفع وربط فيديوهات الدروس.",                            placeholder: true },
-  { id: "simulators",   icon: "fa-microchip",       title: "المحاكيات",      desc: "إدارة روابط المحاكيات الخارجية وإعداداتها.",           placeholder: true },
-  { id: "quizzes",      icon: "fa-circle-question", title: "الاختبارات",     desc: "إنشاء أسئلة الاختبارات وربطها بالدروس.",               placeholder: true },
-  { id: "tasks",        icon: "fa-list-check",      title: "المهام",         desc: "إدارة مهام الأبطال داخل المختبرات.",                   placeholder: true },
+  { id: "labs",         icon: "fa-flask",           title: "المختبرات",      desc: "إنشاء وتعديل مختبرات التعلم (Arduino، Scratch، ...).", placeholder: false },
+  { id: "lessons",      icon: "fa-book-open",       title: "الدروس",         desc: "إدارة محتوى الدروس داخل كل مختبر.",                   placeholder: false },
+  { id: "videos",       icon: "fa-video",           title: "الفيديوهات",     desc: "رفع وربط فيديوهات الدروس.",                            placeholder: false },
+  { id: "simulators",   icon: "fa-microchip",       title: "المحاكيات",      desc: "إدارة روابط المحاكيات الخارجية وإعداداتها.",           placeholder: false },
+  { id: "quizzes",      icon: "fa-circle-question", title: "الاختبارات",     desc: "إنشاء أسئلة الاختبارات وربطها بالدروس.",               placeholder: false },
+  { id: "tasks",        icon: "fa-list-check",      title: "المهام",         desc: "إدارة مهام الأبطال داخل المختبرات.",                   placeholder: false },
   { id: "certificates", icon: "fa-award",           title: "الشهادات",       desc: "تخصيص شهادات إتمام المختبرات.",                        placeholder: true },
-  { id: "news",         icon: "fa-bullhorn",        title: "الأخبار",        desc: "نشر إعلانات وأخبار الأكاديمية للطلاب.",                placeholder: true },
-  { id: "settings",     icon: "fa-gear",            title: "الإعدادات",      desc: "إعدادات المنصة العامة واللغات والمظهر.",               placeholder: true },
+  { id: "news",         icon: "fa-bullhorn",        title: "الأخبار",        desc: "نشر إعلانات وأخبار الأكاديمية للطلاب.",                placeholder: false },
+  { id: "settings",     icon: "fa-gear",            title: "الإعدادات",      desc: "إعدادات المنصة العامة واللغات والمظهر.",               placeholder: false },
   { id: "analytics",    icon: "fa-chart-line",      title: "التحليلات",      desc: "تقارير تفصيلية عن تقدم الطلاب واستخدام المنصة.",       placeholder: true },
 ];
 

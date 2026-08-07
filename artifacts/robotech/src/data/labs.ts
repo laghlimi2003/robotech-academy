@@ -1,4 +1,5 @@
 import type { Lang } from "../hooks/useLang";
+import { initLabStore, getEffectiveConfigs } from "../services/labStore";
 
 export type LessonType = "video" | "embed";
 export type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -19,6 +20,9 @@ export interface Lesson {
   src: string;
   duration: string;
   quiz?: QuizQuestion[];
+  /* CMS fields (Phase 2B) */
+  thumbnail?: string;
+  hidden?: boolean;
 }
 
 export interface LabConfig {
@@ -38,6 +42,10 @@ export interface LabConfig {
   lessons: Lesson[];
   heroTasks: Localized<string[]>;
   skills: Localized<string[]>;
+  /* CMS fields (Phase 2B) */
+  hidden?: boolean;
+  order?: number;
+  simEnabled?: boolean;
 }
 
 export interface LocalizedQuiz {
@@ -129,7 +137,7 @@ const Q = (
   explain: explainAr ? { ar: explainAr, en: explainEn ?? "", fr: explainFr ?? "" } : undefined,
 });
 
-export const labConfigs: Record<string, LabConfig> = {
+export const defaultLabConfigs: Record<string, LabConfig> = {
   scratch: {
     key: "scratch",
     title:       { ar: "عالم سكراتش", en: "Scratch World", fr: "Monde Scratch" },
@@ -810,6 +818,13 @@ export const labConfigs: Record<string, LabConfig> = {
   },
 };
 
+/*
+ * Phase 2B: the CMS (localStorage-backed labStore) is the source of truth.
+ * It is seeded from `defaultLabConfigs` on first run; admin edits override it.
+ * Student pages keep importing `labConfigs` / `labsList` unchanged.
+ */
+initLabStore(defaultLabConfigs);
+export const labConfigs: Record<string, LabConfig> = getEffectiveConfigs();
 export const labsList = Object.values(labConfigs);
 export const difficultyColors: Record<Difficulty, string> = {
   beginner: "#43e97b",

@@ -1,0 +1,108 @@
+You are continuing RoboTech Academy.
+
+Phase 2B-1: Implement the Admin CMS functionality.
+
+IMPORTANT RULES
+
+- Do NOT redesign the Student application.
+- Do NOT redesign the Admin layout.
+- Do NOT change project architecture.
+- Reuse the foundation created in Phase 2A.
+- Build only the CMS functionality.
+- Keep the code modular and ready for database integration in the next phase.
+
+====================================================
+
+Implement complete CRUD management for:
+
+1. Labs
+- Create
+- Edit
+- Delete
+- Hide/Show
+- Change display order
+
+2. Lessons
+- Create
+- Edit
+- Delete
+- Assign to Lab
+- Change display order
+- Hide/Show
+
+3. Videos
+- Support local MP4
+- Support external URLs (YouTube/Vimeo if already supported)
+- Thumbnail
+- Duration
+- Hide/Show
+
+4. Simulators
+- Edit simulator URL
+- Enable/Disable simulator
+- Configure fallback external link
+
+5. Quizzes
+- Create quizzes
+- Edit questions
+- Delete
+- Configure points
+
+6. Hero Tasks
+- Create
+- Edit
+- Delete
+- Configure rewards
+
+7. News
+- Create
+- Edit
+- Delete
+- Publish/Unpublish
+
+8. Site Settings
+- Site name
+- Logo
+- Primary colors
+- Homepage banner text
+
+====================================================
+
+DATA LAYER
+
+For now, use the existing local storage/state management.
+
+DO NOT implement the real database yet.
+
+However, organize all CRUD operations through reusable services so that replacing Local Storage with a database in Phase 3 requires minimal code changes.
+
+====================================================
+
+VALIDATION
+
+Validate all forms.
+
+Prevent duplicate entries where appropriate.
+
+Show clear success/error messages.
+
+====================================================
+
+AFTER COMPLETION
+
+Verify:
+
+✓ Student application still works.
+
+✓ Admin Panel works.
+
+✓ CRUD works for every module.
+
+✓ Project is ready for Phase 3 (Database Integration).
+
+Provide:
+
+- Files modified
+- New services created
+- Modules completed
+- Remaining work for Phase 3

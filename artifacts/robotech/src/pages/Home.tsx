@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { labsList, difficultyColors, localizeLab, type Difficulty } from "../data/labs";
+import { getSettings } from "../services/siteStore";
+
+const siteSettings = getSettings();
 import { getLabOverallProgress } from "../hooks/useProgress";
 import type { User } from "../hooks/useAuth";
 import type { T, Lang } from "../hooks/useLang";
@@ -64,7 +67,7 @@ export default function Home({ onOpenLab, user, t, lang }: HomeProps) {
               <bdi>{t.heroTitle1} {user.avatar} {user.name}</bdi><br />
               <span>{t.heroTitle2}</span>
             </h1>
-            <p className="hero-subtitle">{t.heroSub}</p>
+            <p className="hero-subtitle">{siteSettings.bannerText || t.heroSub}</p>
             <div className="hero-cta-row">
               <button className="btn-primary" onClick={() => document.getElementById("labs")?.scrollIntoView({ behavior: "smooth" })}>
                 <i className="fas fa-rocket" /> {t.startExplore}

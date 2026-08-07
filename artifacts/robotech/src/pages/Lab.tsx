@@ -225,9 +225,11 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
               <i className="fas fa-sync-alt" /> {t.reload}
             </button>
           )}
-          <button className="lb-btn open" onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}>
-            <i className="fas fa-up-right-from-square" /> {t.openSep}
-          </button>
+          {config.externalUrl && (
+            <button className="lb-btn open" onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}>
+              <i className="fas fa-up-right-from-square" /> {t.openSep}
+            </button>
+          )}
         </div>
       </div>
 
@@ -447,21 +449,32 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                 <i className={`fas ${config.faIcon}`} />
               </div>
               <h2 className="sim-launch-title">{config.title}</h2>
-              <p className="sim-launch-desc">{t.clickToLoad}</p>
+              {config.simulatorUrl ? (
+                <p className="sim-launch-desc">{t.clickToLoad}</p>
+              ) : (
+                <p className="sim-launch-desc" style={{ opacity: 0.6 }}>
+                  <i className="fas fa-circle-info" style={{ marginInlineEnd: 6 }} />
+                  {config.externalUrl ? t.openNew : "—"}
+                </p>
+              )}
               <div className="sim-launch-meta">
                 <span><i className="fas fa-child" /> {config.ageRange} {t.yearsOld}</span>
                 <span><i className="fas fa-signal" /> {config.difficultyLabel}</span>
                 <span><i className="fas fa-star" /> {config.tag}</span>
               </div>
-              <button className="sim-launch-btn" onClick={launchSim} style={{ background: config.gradient }}>
-                <i className="fas fa-play" /> {t.launchSim}
-              </button>
-              <button
-                className="sim-launch-ext"
-                onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
-              >
-                <i className="fas fa-up-right-from-square" /> {t.openNew}
-              </button>
+              {config.simulatorUrl && (
+                <button className="sim-launch-btn" onClick={launchSim} style={{ background: config.gradient }}>
+                  <i className="fas fa-play" /> {t.launchSim}
+                </button>
+              )}
+              {config.externalUrl && (
+                <button
+                  className="sim-launch-ext"
+                  onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
+                >
+                  <i className="fas fa-up-right-from-square" /> {t.openNew}
+                </button>
+              )}
             </div>
           )}
 
@@ -479,13 +492,15 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
                     <i className="fas fa-triangle-exclamation" style={{ color: "#f7971e", marginInlineEnd: 8 }} />
                     {t.loadHint}
                   </div>
-                  <button
-                    className="sim-launch-btn"
-                    style={{ background: config.gradient, marginTop: 14 }}
-                    onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
-                  >
-                    <i className="fas fa-up-right-from-square" /> {t.openNew}
-                  </button>
+                  {config.externalUrl && (
+                    <button
+                      className="sim-launch-btn"
+                      style={{ background: config.gradient, marginTop: 14 }}
+                      onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
+                    >
+                      <i className="fas fa-up-right-from-square" /> {t.openNew}
+                    </button>
+                  )}
                   <button className="lb-btn reload" style={{ marginTop: 10 }} onClick={reloadSim}>
                     <i className="fas fa-sync-alt" /> {t.reload}
                   </button>
