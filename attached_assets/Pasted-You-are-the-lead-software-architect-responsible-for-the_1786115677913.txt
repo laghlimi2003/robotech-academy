@@ -1,0 +1,97 @@
+You are the lead software architect responsible for the RoboTech Academy project.
+
+Your mission is NOT to add new features.
+
+Your mission is to stabilize, optimize, and prepare the existing project for future development.
+
+IMPORTANT RULES:
+
+- Do NOT redesign the UI.
+- Do NOT create an Admin Panel yet.
+- Do NOT change the project architecture unless absolutely necessary.
+- Do NOT remove any existing functionality.
+- Keep the current design and user experience.
+- Preserve all existing features.
+- Make only technical improvements.
+
+Your objectives:
+
+1. Analyze the entire codebase.
+
+2. Fix every critical bug that affects stability.
+
+3. Fix all TypeScript errors.
+
+4. Fix all React errors.
+
+5. Fix build errors.
+
+6. Fix console errors and warnings.
+
+7. Remove duplicated and unused code without changing application behavior.
+
+8. Optimize performance:
+   - Lazy loading where appropriate
+   - Prevent unnecessary re-renders
+   - Optimize images and assets
+   - Improve loading speed
+
+9. Verify every existing feature:
+   - Authentication
+   - Dashboard
+   - Leaderboard
+   - Progress system
+   - Badges
+   - Certificates
+   - Hero Tasks
+   - Language switching
+   - Navigation
+   - Videos
+
+10. Verify every simulator:
+   - TurboWarp (Scratch)
+   - Wokwi
+   - Open Roberta
+   - GearS
+
+If embedding is impossible because of external platform restrictions (X-Frame-Options, CSP, etc.), do NOT waste time trying to bypass it.
+
+Instead:
+- detect the limitation,
+- explain the reason,
+- implement the best professional fallback (for example, opening the simulator in a new secure tab while preserving the learning workflow).
+
+11. Verify responsive behavior.
+
+The application must work correctly on:
+
+- Desktop
+- Laptop
+- Tablet
+- Android phones
+- iPhone
+
+Fix only responsive issues that are broken.
+Do not redesign the interface.
+
+12. Verify that the deployed application works correctly for external users.
+
+13. Clean the project structure while preserving all functionality.
+
+14. Improve maintainability without changing the visual appearance.
+
+====================================================
+
+When everything is finished:
+
+Provide a summary including:
+
+- Fixed issues
+- Optimizations made
+- Remaining limitations (if any)
+- Files modified
+- Verification that the project is stable and ready for Phase 2 (Admin CMS)
+
+Do not start implementing any Admin Panel, Database, or UI redesign.
+
+This is Phase 1 only.

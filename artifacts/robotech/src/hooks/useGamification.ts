@@ -204,12 +204,6 @@ export function useGamification(userEmail: string | undefined, userName: string,
 
   // ── Idempotent action APIs (labKey + idx) ──────────────────
   const awardLesson = useCallback((labKey: string, lessonIdx: number) => {
-    setState(prev => {
-      const already = prev.awarded.lessons[labKey]?.includes(lessonIdx);
-      if (already) return prev;
-      return prev;        // no-op, real work happens below
-    });
-    // Use functional update once more to actually apply, guarded by check:
     applyAward(
       s => {
         if (s.awarded.lessons[labKey]?.includes(lessonIdx)) return s;

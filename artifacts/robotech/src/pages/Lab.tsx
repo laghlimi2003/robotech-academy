@@ -42,6 +42,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
   const [prevCount, setPrevCount]  = useState(0);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [videoError, setVideoError] = useState<string>("");
+  const [simTimedOut, setSimTimedOut] = useState(false);
+  const [simAttempt, setSimAttempt] = useState(0);
   const [quizOpenFor, setQuizOpenFor] = useState<number | null>(null);
   const [showCert, setShowCert] = useState(false);
 
@@ -51,7 +53,7 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   const { doneTasks, completedLessons, taskPercent, lessonPercent, overallPercent,
           isAllTasksDone, toggleTask, markLesson } = useProgress(
-    labKey, rawConfig?.heroTasks.ar.length ?? 0, rawConfig?.lessons.length ?? 0
+    labKey, rawConfig?.heroTasks.ar.length ?? 0, rawConfig?.lessons.length ?? 0, user.email
   );
 
   const pauseMedia = useCallback(() => {
@@ -121,9 +123,19 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
     gam?.awardLesson(labKey, idx);
   };
 
+  // If the simulator iframe never fires load (blocked by X-Frame-Options/CSP or
+  // very slow network), surface a fallback instead of an endless spinner.
+  useEffect(() => {
+    if (!simReady || simLoaded) { setSimTimedOut(false); return; }
+    const timer = window.setTimeout(() => setSimTimedOut(true), 20000);
+    return () => window.clearTimeout(timer);
+  }, [simReady, simLoaded, simAttempt]);
+
   const launchSim = () => {
     setSimReady(true);
     setSimLoaded(false);
+    setSimTimedOut(false);
+    setSimAttempt(a => a + 1);
     if (simRef.current && config?.simulatorUrl) {
       simRef.current.src = config.simulatorUrl;
     }
@@ -131,6 +143,8 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
   const reloadSim = () => {
     setSimLoaded(false);
+    setSimTimedOut(false);
+    setSimAttempt(a => a + 1);
     if (simRef.current && config?.simulatorUrl) {
       simRef.current.src = config.simulatorUrl;
     }
@@ -453,9 +467,30 @@ export default function Lab({ labKey, onGoHome, theme, toggleTheme, t, lang, set
 
           {simReady && !simLoaded && (
             <div className="sim-loader">
-              <div className="loader-spinner" style={{ borderTopColor: config.color }} />
-              <div className="loader-text">{t.loading} {config.title}...</div>
-              <div className="loader-hint">{t.loadHint}</div>
+              {!simTimedOut ? (
+                <>
+                  <div className="loader-spinner" style={{ borderTopColor: config.color }} />
+                  <div className="loader-text">{t.loading} {config.title}...</div>
+                  <div className="loader-hint">{t.loadHint}</div>
+                </>
+              ) : (
+                <>
+                  <div className="loader-text">
+                    <i className="fas fa-triangle-exclamation" style={{ color: "#f7971e", marginInlineEnd: 8 }} />
+                    {t.loadHint}
+                  </div>
+                  <button
+                    className="sim-launch-btn"
+                    style={{ background: config.gradient, marginTop: 14 }}
+                    onClick={() => window.open(config.externalUrl, "_blank", "noopener,noreferrer")}
+                  >
+                    <i className="fas fa-up-right-from-square" /> {t.openNew}
+                  </button>
+                  <button className="lb-btn reload" style={{ marginTop: 10 }} onClick={reloadSim}>
+                    <i className="fas fa-sync-alt" /> {t.reload}
+                  </button>
+                </>
+              )}
             </div>
           )}
 

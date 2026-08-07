@@ -26,10 +26,11 @@ export default function Home({ onOpenLab, user, t, lang }: HomeProps) {
   useEffect(() => {
     const map: Record<string, number> = {};
     localized.forEach((lab) => {
-      map[lab.key] = getLabOverallProgress(lab.key, lab.heroTasks.length, lab.lessons.length);
+      map[lab.key] = getLabOverallProgress(lab.key, lab.heroTasks.length, lab.lessons.length, user.email);
     });
     setProgMap(map);
-  }, [lang]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang, user.email]);
 
   const filtered = filter === "all" ? localized : localized.filter((l) => l.difficulty === filter);
 

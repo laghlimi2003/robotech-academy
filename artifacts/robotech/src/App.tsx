@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Home from "./pages/Home";
-import Lab  from "./pages/Lab";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 import Particles from "./components/Particles";
 import PwaInstall from "./components/PwaInstall";
 import XPBar from "./components/XPBar";
 import RewardToast from "./components/RewardToast";
-import Leaderboard from "./pages/Leaderboard";
-import AdminPanel from "./pages/AdminPanel";
+
+// Lazy-loaded views — keeps the initial bundle small (Lab is the heaviest page)
+const Lab         = lazy(() => import("./pages/Lab"));
+const Dashboard   = lazy(() => import("./pages/Dashboard"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const AdminPanel  = lazy(() => import("./pages/AdminPanel"));
 import { useAuth, isAdminEmail } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
@@ -88,7 +90,11 @@ export default function App() {
 
   /* ── ADMIN → لوحة الإدارة مباشرة ── */
   if (isAdminEmail(user.email)) {
-    return <AdminPanel onLogout={logout} theme={theme} />;
+    return (
+      <Suspense fallback={<div className="page-transition" />}>
+        <AdminPanel onLogout={logout} theme={theme} />
+      </Suspense>
+    );
   }
 
   /* ── LOGGED IN ── */
@@ -183,30 +189,41 @@ export default function App() {
       )}
 
       {view === "home"      && <Home onOpenLab={openLab} user={user} theme={theme} t={t} lang={lang} />}
-      {view === "dashboard" && <Dashboard user={user} t={t} lang={lang} onOpenLab={openLab} />}
-      {view === "leaderboard" && (
-        <Leaderboard
-          currentEmail={user.email}
-          earnedBadges={gam.badges}
-          resolveBadge={gam.resolveBadge}
-          lang={lang}
-          t={t}
-          theme={theme}
-        />
-      )}
-      {view === "lab"  && labKey && (
-        <Lab
-          labKey={labKey}
-          onGoHome={goLabs}
-          theme={theme}
-          toggleTheme={toggleTheme}
-          t={t}
-          lang={lang}
-          setLang={setLang}
-          user={user}
-          gam={gam}
-        />
-      )}
+      <Suspense fallback={<div className="page-transition" />}>
+        {view === "dashboard" && (
+          <Dashboard
+            user={user}
+            t={t}
+            lang={lang}
+            onOpenLab={openLab}
+            earnedBadgeIds={gam.badges}
+            resolveBadge={gam.resolveBadge}
+          />
+        )}
+        {view === "leaderboard" && (
+          <Leaderboard
+            currentEmail={user.email}
+            earnedBadges={gam.badges}
+            resolveBadge={gam.resolveBadge}
+            lang={lang}
+            t={t}
+            theme={theme}
+          />
+        )}
+        {view === "lab"  && labKey && (
+          <Lab
+            labKey={labKey}
+            onGoHome={goLabs}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            t={t}
+            lang={lang}
+            setLang={setLang}
+            user={user}
+            gam={gam}
+          />
+        )}
+      </Suspense>
 
       <RewardToast rewards={gam.rewards} onDismiss={gam.dismissReward} lang={lang} t={t} />
       <PwaInstall t={t} />
