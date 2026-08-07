@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Particles from "./components/Particles";
@@ -10,7 +10,8 @@ import RewardToast from "./components/RewardToast";
 const Lab         = lazy(() => import("./pages/Lab"));
 const Dashboard   = lazy(() => import("./pages/Dashboard"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const AdminPanel  = lazy(() => import("./pages/AdminPanel"));
+const AdminApp    = lazy(() => import("./admin/AdminApp"));
+const AdminLogin  = lazy(() => import("./admin/AdminLogin"));
 import { useAuth, isAdminEmail } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import { useLang } from "./hooks/useLang";
@@ -34,6 +35,14 @@ export default function App() {
   const [notifState, setNotifState] = useState<NotificationPermission | "unsupported">(
     typeof Notification === "undefined" ? "unsupported" : Notification.permission
   );
+
+  // Admin routes live under #/admin/... — student views are untouched
+  const [adminRoute, setAdminRoute] = useState(() => window.location.hash.startsWith("#/admin"));
+  useEffect(() => {
+    const onHash = () => setAdminRoute(window.location.hash.startsWith("#/admin"));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   useReminder(t, user?.name);
   const gam = useGamification(user?.email, user?.name ?? "", user?.avatar ?? "🤖", lang);
@@ -66,6 +75,20 @@ export default function App() {
     }, 320);
   };
 
+  /* ── ADMIN LOGIN PAGE (#/admin while logged out) ── */
+  if (!user && adminRoute) {
+    return (
+      <Suspense fallback={<div className="page-transition" />}>
+        <AdminLogin
+          onLogin={login}
+          error={error}
+          clearError={clearError}
+          onBack={() => { window.location.hash = ""; clearError(); }}
+        />
+      </Suspense>
+    );
+  }
+
   /* ── NOT LOGGED IN → show Login ── */
   if (!user) {
     return (
@@ -88,11 +111,11 @@ export default function App() {
     );
   }
 
-  /* ── ADMIN → لوحة الإدارة مباشرة ── */
-  if (isAdminEmail(user.email)) {
+  /* ── ADMIN → لوحة الإدارة (protected: role check inside AdminApp) ── */
+  if (isAdminEmail(user.email) || adminRoute) {
     return (
       <Suspense fallback={<div className="page-transition" />}>
-        <AdminPanel onLogout={logout} theme={theme} />
+        <AdminApp user={user} onLogout={logout} theme={theme} />
       </Suspense>
     );
   }

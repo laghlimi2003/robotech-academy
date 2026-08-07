@@ -1,0 +1,146 @@
+You are the lead software architect of the RoboTech Academy project.
+
+Phase 2A: Build the Admin Panel Foundation.
+
+IMPORTANT:
+This is ONLY the foundation of the Admin CMS.
+
+DO NOT build the complete CMS yet.
+
+DO NOT redesign the Student application.
+
+DO NOT modify existing learning features.
+
+DO NOT touch the current UI except adding Admin access.
+
+====================================================
+
+OBJECTIVE
+
+Create a scalable, professional Admin Panel architecture that will be expanded in later phases.
+
+The current student platform must continue working exactly as before.
+
+====================================================
+
+ADMIN AUTHENTICATION
+
+Create a secure Admin Login page.
+
+Only authenticated administrators can access the Admin Panel.
+
+Non-admin users must never see Admin pages.
+
+Prepare the authentication structure for future database integration.
+
+====================================================
+
+ADMIN LAYOUT
+
+Create a modern Admin Dashboard layout including:
+
+• Sidebar
+• Top navigation bar
+• Main content area
+• Breadcrumb navigation
+• Logout button
+
+Use the existing design language of RoboTech Academy.
+
+No redesign of the public website.
+
+====================================================
+
+CREATE EMPTY ADMIN MODULES
+
+Create the following pages as connected placeholders.
+
+Each page must contain only:
+
+- Title
+- Short description
+- "Coming in Phase 2B"
+
+Modules:
+
+Dashboard
+Users
+Labs
+Lessons
+Videos
+Simulators
+Quizzes
+Tasks
+Certificates
+News
+Settings
+Analytics
+
+Do NOT implement CRUD operations yet.
+
+====================================================
+
+ROUTING
+
+Create protected routes for every Admin page.
+
+Student routes must remain unchanged.
+
+====================================================
+
+ACCESS CONTROL
+
+Prepare a role system.
+
+Roles:
+
+Administrator
+Teacher
+Student
+
+For now only Administrator is active.
+
+Teacher and Student are placeholders for future use.
+
+====================================================
+
+PROJECT STRUCTURE
+
+Organize the Admin code in a clean architecture.
+
+Do not duplicate components.
+
+Reuse existing UI components whenever possible.
+
+====================================================
+
+RESPONSIVE
+
+The Admin Panel must work correctly on:
+
+Desktop
+Laptop
+Tablet
+
+Mobile support can remain basic for now.
+
+====================================================
+
+AFTER COMPLETION
+
+Verify that:
+
+✓ Student application still works perfectly.
+
+✓ No existing feature has been broken.
+
+✓ No redesign has been introduced.
+
+✓ Admin Panel foundation is complete.
+
+Finally provide:
+
+- Files created
+- Files modified
+- Architecture summary
+- Confirmation that the project is ready for Phase 2B.

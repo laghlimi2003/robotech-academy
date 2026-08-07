@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { getLeaderboard } from "../hooks/useGamification";
+import { getLeaderboard } from "../../hooks/useGamification";
 
 interface AdminUser {
   email: string;
@@ -34,14 +34,13 @@ function deleteUser(email: string) {
   localStorage.setItem("robotech_gam_profiles_v2", JSON.stringify(profiles));
 }
 
-interface AdminPanelProps {
-  onLogout: () => void;
-  theme: "dark" | "light";
-}
-
 type SortKey = "xp" | "level" | "streak" | "badges" | "name";
 
-export default function AdminPanel({ onLogout, theme }: AdminPanelProps) {
+/**
+ * Users module — the existing user-management screen from Phase 1,
+ * now rendered inside the Admin Layout (Phase 2A). Functionality unchanged.
+ */
+export default function UsersModule() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [leaderboard, setLeaderboard] = useState(getLeaderboard());
   const [sortKey, setSortKey] = useState<SortKey>("xp");
@@ -107,25 +106,7 @@ export default function AdminPanel({ onLogout, theme }: AdminPanelProps) {
     sortKey === k ? <i className={`fas fa-caret-${sortAsc ? "up" : "down"}`} /> : <i className="fas fa-sort" style={{ opacity: 0.4 }} />;
 
   return (
-    <div className="admin-panel" data-theme={theme}>
-      {/* Header */}
-      <header className="admin-header">
-        <div className="admin-logo">
-          <span>🛡️</span>
-          <div>
-            <strong>لوحة إدارة RoboTech</strong>
-            <span>بيانات المستخدمين والإحصائيات</span>
-          </div>
-        </div>
-        <div className="admin-header-right">
-          <span className="admin-badge">Admin</span>
-          <button className="admin-logout" onClick={onLogout}>
-            <i className="fas fa-sign-out-alt" /> تسجيل خروج
-          </button>
-        </div>
-      </header>
-
-      <main className="admin-main">
+    <div className="admin-users-module">
         {/* Stats */}
         <div className="admin-stats">
           <div className="admin-stat-card">
@@ -245,7 +226,6 @@ export default function AdminPanel({ onLogout, theme }: AdminPanelProps) {
             </table>
           </div>
         )}
-      </main>
 
       {/* Confirm delete dialog */}
       {confirmDelete && (
