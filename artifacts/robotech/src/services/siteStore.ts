@@ -3,6 +3,8 @@
  * localStorage-backed; swap the load/persist internals for API calls in Phase 3.
  */
 
+import { cloudPush } from "./cloudSync";
+
 /* ── News ──────────────────────────────────────────────────── */
 
 export interface NewsItem {
@@ -27,7 +29,7 @@ function loadNews(): NewsItem[] {
 const STORAGE_ERR = "تعذّر الحفظ: مساحة التخزين ممتلئة أو غير متاحة";
 
 function persistNews(list: NewsItem[]): boolean {
-  try { localStorage.setItem(NEWS_KEY, JSON.stringify(list)); return true; } catch { return false; }
+  try { localStorage.setItem(NEWS_KEY, JSON.stringify(list)); cloudPush("news", list); return true; } catch { return false; }
 }
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
@@ -113,6 +115,7 @@ export function saveSettings(patch: Partial<SiteSettings>): SaveResult {
   if (!/^#[0-9a-fA-F]{6}$/.test(next.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(next.accentColor))
     return { ok: false, error: "صيغة اللون يجب أن تكون HEX مثل ‎#667eea" };
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(next)); } catch { return { ok: false, error: STORAGE_ERR }; }
+  cloudPush("settings", next);
   window.dispatchEvent(new CustomEvent(SETTINGS_EVENT));
   return { ok: true };
 }
@@ -140,5 +143,6 @@ export function saveXpOverrides(patch: XpOverrides): SaveResult {
       return { ok: false, error: `قيمة ${k} يجب أن تكون رقماً بين 0 و 10000` };
   }
   try { localStorage.setItem(XP_KEY, JSON.stringify(next)); } catch { return { ok: false, error: STORAGE_ERR }; }
+  cloudPush("xp", next);
   return { ok: true };
 }

@@ -26,6 +26,50 @@ interface MediaRecord extends MediaItem { blob: Blob }
 const DB_NAME = "robotech_media_v1";
 const STORE = "files";
 
+/* ── Supabase Storage mirror (Phase 3) ─────────────────────── */
+import { supabase } from "./supabaseClient";
+
+/** Bucket per Phase 3 brief: videos / images / documents (+certificates reserved). */
+function bucketFor(category: MediaCategory): string {
+  if (category === "image" || category === "logo" || category === "banner") return "images";
+  if (category === "video") return "videos";
+  return "documents";
+}
+
+/** Background upload of a stored file to Supabase Storage + metadata row. Never throws. */
+async function cloudMirrorUpload(item: MediaItem, blob: Blob) {
+  if (!supabase) return;
+  try {
+    const bucket = bucketFor(item.category);
+    const path = `${item.id}/${item.name}`;
+    const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: item.mime, upsert: true });
+    if (error) return; // offline or not signed in as admin — file stays local (offline fallback)
+    await supabase.from("media").upsert({
+      id: item.id, name: item.name, category: item.category,
+      mime: item.mime, size: item.size, bucket, path, created_at: item.createdAt,
+    });
+  } catch { /* best effort */ }
+}
+
+async function cloudMirrorDelete(id: string) {
+  if (!supabase) return;
+  try {
+    const { data } = await supabase.from("media").select("bucket,path").eq("id", id).maybeSingle();
+    if (data) await supabase.storage.from(data.bucket).remove([data.path]);
+    await supabase.from("media").delete().eq("id", id);
+  } catch { /* best effort */ }
+}
+
+/** Public URL of a mirrored file (used when the blob is not in this browser's IndexedDB). */
+async function cloudResolve(id: string): Promise<string> {
+  if (!supabase) return "";
+  try {
+    const { data } = await supabase.from("media").select("bucket,path").eq("id", id).maybeSingle();
+    if (!data) return "";
+    return supabase.storage.from(data.bucket).getPublicUrl(data.path).data.publicUrl ?? "";
+  } catch { return ""; }
+}
+
 /* ── IndexedDB provider (replace with Supabase Storage in Phase 3) ── */
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -99,9 +143,24 @@ export const MAX_SIZE = 1024 * 1024 * 1024; // 1GB per file
 export async function listMedia(): Promise<MediaItem[]> {
   try {
     const all = await tx<MediaRecord[]>("readonly", s => s.getAll() as IDBRequest<MediaRecord[]>);
-    return all
-      .map(({ blob: _b, ...item }) => item)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const items = all.map(({ blob: _b, ...item }) => item);
+    // Phase 3: merge cloud metadata (files uploaded from another device)
+    if (supabase) {
+      try {
+        const { data } = await supabase.from("media").select("id,name,category,mime,size,created_at");
+        if (data) {
+          const seen = new Set(items.map(i => i.id));
+          for (const r of data) {
+            if (seen.has(r.id)) continue;
+            items.push({
+              id: r.id, name: r.name, category: r.category as MediaCategory,
+              mime: r.mime, size: Number(r.size), createdAt: r.created_at,
+            });
+          }
+        }
+      } catch { /* offline — local list only */ }
+    }
+    return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch { return []; }
 }
 
@@ -161,6 +220,7 @@ export async function uploadMedia(
     onProgress?.(95);
     await tx("readwrite", s => s.put({ ...item, blob } satisfies MediaRecord));
     onProgress?.(100);
+    void cloudMirrorUpload(item, blob); // background mirror to Supabase Storage
     return { ok: true, data: item };
   } catch (err) {
     const quota = err instanceof DOMException && (err.name === "QuotaExceededError" || err.name === "NS_ERROR_DOM_QUOTA_REACHED");
@@ -179,6 +239,7 @@ export async function renameMedia(id: string, name: string): Promise<MediaResult
     const rec = await tx<MediaRecord | undefined>("readonly", s => s.get(id) as IDBRequest<MediaRecord | undefined>);
     if (!rec) return { ok: false, error: "الملف غير موجود" };
     await tx("readwrite", s => s.put({ ...rec, name: name.trim() }));
+    if (supabase) void supabase.from("media").update({ name: name.trim() }).eq("id", id).then(() => {}, () => {});
     return { ok: true, data: null };
   } catch { return { ok: false, error: "فشل إعادة التسمية" }; }
 }
@@ -187,6 +248,7 @@ export async function deleteMedia(id: string): Promise<MediaResult<null>> {
   try {
     await tx("readwrite", s => s.delete(id));
     evictUrl(id);
+    void cloudMirrorDelete(id);
     return { ok: true, data: null };
   } catch { return { ok: false, error: "فشل حذف الملف" }; }
 }
@@ -235,7 +297,12 @@ export function resolveMediaUrl(src: string): Promise<string> {
   const p = (async () => {
     try {
       const rec = await tx<MediaRecord | undefined>("readonly", s => s.get(id) as IDBRequest<MediaRecord | undefined>);
-      if (!rec) return "";
+      if (!rec) {
+        // Phase 3: not in this browser — serve the Supabase Storage public URL
+        const cloudUrl = await cloudResolve(id);
+        if (cloudUrl) cacheUrl(id, cloudUrl); // revokeObjectURL on an https URL is a harmless no-op
+        return cloudUrl;
+      }
       const url = URL.createObjectURL(rec.blob);
       cacheUrl(id, url);
       return url;

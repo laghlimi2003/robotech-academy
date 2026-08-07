@@ -10,6 +10,7 @@
  * calls — no UI changes needed.
  */
 import type { LabConfig, Lesson, QuizQuestion, Localized } from "../data/labs";
+import { cloudPush } from "./cloudSync";
 
 const KEY = "robotech_cms_labs_v1";
 
@@ -36,10 +37,16 @@ function persist(list: LabConfig[]): boolean {
   try {
     localStorage.setItem(KEY, JSON.stringify(list));
     cache = list;
+    cloudPush("labs", list); // background mirror to Supabase (Phase 3)
     return true;
   } catch {
     return false; // storage full/unavailable — do NOT pretend it saved
   }
+}
+
+/** Phase 3: drop the in-memory cache after a cloud pull rewrote localStorage. */
+export function invalidateLabCache() {
+  cache = null;
 }
 
 const STORAGE_ERR = "تعذّر الحفظ: مساحة التخزين ممتلئة أو غير متاحة";
@@ -54,6 +61,7 @@ function markDeleted(key: string) {
   try {
     const list = getDeletedKeys();
     if (!list.includes(key)) localStorage.setItem(DELETED_KEYS, JSON.stringify([...list, key]));
+    cloudPush("deletedKey", key, `del:${key}`);
   } catch { /* best effort */ }
 }
 

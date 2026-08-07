@@ -4,6 +4,7 @@ import { levelFromXp, XP_REWARDS } from "../data/levels";
 import { labConfigs } from "../data/labs";
 import type { Lang } from "./useLang";
 import type { Localized } from "../data/badges";
+import { cloudPush, CLOUD_EVENT } from "../services/cloudSync";
 
 interface AwardedEvents {
   lessons: Record<string, number[]>; // labKey -> lesson indices already awarded
@@ -122,7 +123,16 @@ export function useGamification(userEmail: string | undefined, userName: string,
       streak: state.streak,
     };
     saveProfiles(profiles);
+    cloudPush("gamState", { email: userEmail, data: state }, `gam:${userEmail}`);
+    cloudPush("gamProfile", { email: userEmail, entry: profiles[userEmail] }, `gamp:${userEmail}`);
   }, [state, userEmail, userName, userAvatar]);
+
+  // Phase 3: re-read local state after a cloud pull rewrote it (e.g. login on a new device)
+  useEffect(() => {
+    const onCloud = () => setState(loadStateFor(userEmail));
+    window.addEventListener(CLOUD_EVENT, onCloud);
+    return () => window.removeEventListener(CLOUD_EVENT, onCloud);
+  }, [userEmail]);
 
   // Record visit/streak ONCE per user per session
   useEffect(() => {

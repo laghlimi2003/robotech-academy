@@ -19,6 +19,8 @@ import { useReminder, requestNotificationPermission } from "./hooks/useReminder"
 import { useGamification } from "./hooks/useGamification";
 import { useSiteSettings } from "./hooks/useSiteSettings";
 import { useMediaUrl } from "./hooks/useMediaUrl";
+import { CLOUD_EVENT } from "./services/cloudSync";
+import { invalidateLabCache } from "./services/labStore";
 
 type View = "home" | "lab" | "dashboard" | "leaderboard";
 const LAST_LAB_KEY = "robotech_last_lab_v2";
@@ -38,6 +40,14 @@ export default function App() {
     document.documentElement.style.setProperty("--cms-accent", siteSettings.accentColor);
   }, [siteSettings]);
   const { lang, setLang, t } = useLang();
+
+  // Phase 3: after a cloud pull rewrites localStorage, drop caches and re-render
+  const [, setCloudTick] = useState(0);
+  useEffect(() => {
+    const onCloud = () => { invalidateLabCache(); setCloudTick(v => v + 1); };
+    window.addEventListener(CLOUD_EVENT, onCloud);
+    return () => window.removeEventListener(CLOUD_EVENT, onCloud);
+  }, []);
 
   const [view, setView]     = useState<View>("home");
   const [labKey, setLabKey] = useState<string | null>(null);

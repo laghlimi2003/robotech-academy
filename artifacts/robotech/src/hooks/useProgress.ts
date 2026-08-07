@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { cloudPush, CLOUD_EVENT } from "../services/cloudSync";
 
 interface LabProgress {
   doneTasks: number[];
@@ -59,6 +60,8 @@ function loadProgress(email?: string): ProgressState {
 function saveProgress(state: ProgressState, email?: string) {
   try {
     localStorage.setItem(storageKey(email), JSON.stringify(state));
+    const e = normalizeEmail(email);
+    if (e) cloudPush("progress", { email: e, data: state }, `progress:${e}`);
   } catch {
     /* storage unavailable — ignore */
   }
@@ -72,6 +75,13 @@ export function useProgress(labKey: string, totalTasks: number, totalLessons: nu
   // in-memory progress can never bleed into (or be saved under) another account.
   useEffect(() => {
     setProgress(loadProgress(normEmail));
+  }, [normEmail]);
+
+  // Phase 3: re-read after a cloud pull rewrote local progress (login on a new device)
+  useEffect(() => {
+    const onCloud = () => setProgress(loadProgress(normEmail));
+    window.addEventListener(CLOUD_EVENT, onCloud);
+    return () => window.removeEventListener(CLOUD_EVENT, onCloud);
   }, [normEmail]);
 
   const toggleTask = useCallback((idx: number) => {

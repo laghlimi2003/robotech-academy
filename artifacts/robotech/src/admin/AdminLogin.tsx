@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 interface AdminLoginProps {
-  onLogin: (email: string, password: string) => boolean;
+  onLogin: (email: string, password: string) => Promise<boolean>;
   error: string;
   clearError: () => void;
   onBack: () => void;
@@ -19,7 +19,7 @@ export default function AdminLogin({ onLogin, error, clearError, onBack }: Admin
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+    void onLogin(email, password);
   };
 
   return (

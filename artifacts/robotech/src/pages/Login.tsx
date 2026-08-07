@@ -2,8 +2,8 @@ import { useState } from "react";
 import type { T, Lang } from "../hooks/useLang";
 
 interface Props {
-  onLogin: (email: string, password: string) => boolean;
-  onSignup: (name: string, email: string, password: string) => boolean;
+  onLogin: (email: string, password: string) => Promise<boolean>;
+  onSignup: (name: string, email: string, password: string) => Promise<boolean>;
   error: string;
   clearError: () => void;
   t: T;
@@ -30,8 +30,8 @@ export default function Login({ onLogin, onSignup, error, clearError, t, lang, s
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     const ok = mode === "login"
-      ? onLogin(email, password)
-      : onSignup(name, email, password);
+      ? await onLogin(email, password)
+      : await onSignup(name, email, password);
     setLoading(false);
     if (!ok) triggerShake();
   };
