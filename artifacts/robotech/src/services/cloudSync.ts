@@ -70,17 +70,16 @@ async function flushQueue() {
   if (flushing) { flushAgain = true; return; }
   flushing = true;
   try {
-    for (;;) {
-      const q = loadQueue();
-      if (!q.length) break;
-      const entry = q[0];
+    // Attempt every queued entry once per flush: one entry that keeps failing
+    // (e.g. an unauthorized user-state push) must not block the others.
+    for (const entry of loadQueue()) {
       const ok = await pushEntry(entry);
-      if (!ok) break; // stay queued; retry on next flush
-      // remove the processed entry (a newer write may have replaced it — match by key)
+      if (!ok) continue; // stays queued; retried on next flush
+      // remove the processed entry (a newer write may have replaced it — match by key+payload)
       const cur = loadQueue();
       const idx = cur.findIndex(e => e.k === entry.k && JSON.stringify(e.payload) === JSON.stringify(entry.payload));
       if (idx !== -1) { cur.splice(idx, 1); saveQueue(cur); }
-      else if (cur.length && cur[0].k === entry.k) { flushAgain = true; break; } // replaced by a newer payload mid-flight
+      else if (cur.some(e => e.k === entry.k)) flushAgain = true; // replaced by a newer payload mid-flight
     }
   } finally {
     flushing = false;
@@ -177,8 +176,15 @@ export function cloudPush(kind: PushKind, payload: unknown, dedupeKey?: string) 
 
 async function pullPublicContent(): Promise<boolean> {
   if (!supabase) return false;
-  // Unpushed local edits win: never let a pull clobber content still in the queue.
-  if (loadQueue().length) { void flushQueue(); return false; }
+  // Unpushed local edits win — but only for the SPECIFIC content kinds still
+  // queued. A stuck user-state push (e.g. progress from an unauthenticated
+  // session) must never block pulling fresh CMS content on this device.
+  const pendingKinds = new Set(loadQueue().map(e => e.kind));
+  if (pendingKinds.size) void flushQueue();
+  const skipLabs = pendingKinds.has("labs") || pendingKinds.has("deletedKey");
+  const skipNews = pendingKinds.has("news");
+  const skipSettings = pendingKinds.has("settings");
+  const skipXp = pendingKinds.has("xp");
   let changed = false;
   const [labs, deleted, news, kv, profiles] = await Promise.all([
     supabase.from("labs").select("data").order("ord"),
@@ -188,21 +194,27 @@ async function pullPublicContent(): Promise<boolean> {
     supabase.from("gam_profiles").select("email,data"),
   ]);
 
-  if (!labs.error && labs.data && labs.data.length) {
+  // "Cloud is live" = content was migrated at least once. Only then may an
+  // EMPTY cloud list overwrite local data (i.e. the admin deleted everything).
+  const cloudLive = Boolean(labs.data?.length) || Boolean(kv.data?.length);
+
+  if (!skipLabs && !labs.error && labs.data && labs.data.length) {
     const next = labs.data.map(r => r.data);
     if (JSON.stringify(next) !== localStorage.getItem(LABS_KEY)) { writeJson(LABS_KEY, next); changed = true; }
   }
-  if (!deleted.error && deleted.data && deleted.data.length) {
+  if (!skipLabs && !deleted.error && deleted.data && deleted.data.length) {
     const local = readJson<string[]>(DELETED_KEYS, []);
     const merged = [...new Set([...local, ...deleted.data.map(r => r.key)])];
     if (merged.length !== local.length) { writeJson(DELETED_KEYS, merged); changed = true; }
   }
-  if (!news.error && news.data && news.data.length) {
+  if (!skipNews && !news.error && news.data && (news.data.length || cloudLive)) {
     const next = news.data.map(r => r.data);
     if (JSON.stringify(next) !== localStorage.getItem(NEWS_KEY)) { writeJson(NEWS_KEY, next); changed = true; }
   }
   if (!kv.error && kv.data) {
     for (const row of kv.data) {
+      if (row.key === "settings" && skipSettings) continue;
+      if (row.key === "xp" && skipXp) continue;
       const key = row.key === "settings" ? SETTINGS_KEY : row.key === "xp" ? XP_KEY : null;
       if (key && JSON.stringify(row.data) !== localStorage.getItem(key)) { writeJson(key, row.data); changed = true; }
     }
@@ -262,18 +274,27 @@ export function pushUserState(email: string) {
 export async function migrateLocalToCloud() {
   if (!supabase || localStorage.getItem(MIGRATED_KEY)) return;
   try {
-    const { count, error } = await supabase.from("labs").select("key", { count: "exact", head: true });
-    if (error) return;
+    // Each kind is only seeded when the cloud has NOTHING for it — a device
+    // logging in later must never overwrite newer cloud data with stale local.
+    const [labsC, newsC, kvRows] = await Promise.all([
+      supabase.from("labs").select("key", { count: "exact", head: true }),
+      supabase.from("news").select("id", { count: "exact", head: true }),
+      supabase.from("site_kv").select("key"),
+    ]);
+    if (labsC.error || newsC.error || kvRows.error) return;
+    const kvKeys = new Set((kvRows.data ?? []).map(r => r.key));
     const localLabs = readJson<unknown[]>(LABS_KEY, []);
-    if ((count ?? 0) === 0 && localLabs.length) cloudPush("labs", localLabs);
+    if ((labsC.count ?? 0) === 0 && localLabs.length) {
+      cloudPush("labs", localLabs);
+      for (const key of readJson<string[]>(DELETED_KEYS, []))
+        cloudPush("deletedKey", key, `del:${key}`);
+    }
     const news = readJson<unknown[]>(NEWS_KEY, []);
-    if (news.length) cloudPush("news", news);
+    if ((newsC.count ?? 0) === 0 && news.length) cloudPush("news", news);
     const settings = localStorage.getItem(SETTINGS_KEY);
-    if (settings) cloudPush("settings", JSON.parse(settings));
+    if (!kvKeys.has("settings") && settings) cloudPush("settings", JSON.parse(settings));
     const xp = localStorage.getItem(XP_KEY);
-    if (xp) cloudPush("xp", JSON.parse(xp));
-    for (const key of readJson<string[]>(DELETED_KEYS, []))
-      cloudPush("deletedKey", key, `del:${key}`);
+    if (!kvKeys.has("xp") && xp) cloudPush("xp", JSON.parse(xp));
     localStorage.setItem(MIGRATED_KEY, new Date().toISOString());
   } catch { /* retried on next admin login */ }
 }
@@ -286,14 +307,22 @@ let initialized = false;
 export function initCloudSync() {
   if (initialized || !supabase) return;
   initialized = true;
-  window.addEventListener("online", () => { void flushQueue(); });
+  const pullAndNotify = async () => {
+    const changed = await pullPublicContent();
+    if (changed) {
+      window.dispatchEvent(new CustomEvent(SETTINGS_EVENT));
+      window.dispatchEvent(new CustomEvent(CLOUD_EVENT));
+    }
+  };
+  window.addEventListener("online", () => { void flushQueue(); void pullAndNotify().catch(() => {}); });
+  // Re-pull when the tab becomes visible again (device unlocked / app switched
+  // back) so other devices' admin changes show up without a manual reload.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && isOnline()) void pullAndNotify().catch(() => {});
+  });
   void (async () => {
     try {
-      const changed = await pullPublicContent();
-      if (changed) {
-        window.dispatchEvent(new CustomEvent(SETTINGS_EVENT));
-        window.dispatchEvent(new CustomEvent(CLOUD_EVENT));
-      }
+      await pullAndNotify();
       // restore per-user state for a persisted session
       const { data } = await supabase.auth.getSession();
       const email = data.session?.user?.email;

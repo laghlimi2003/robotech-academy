@@ -1,5 +1,5 @@
 import type { Lang } from "../hooks/useLang";
-import { initLabStore, getEffectiveConfigs } from "../services/labStore";
+import { initLabStore, getEffectiveConfigs, invalidateLabCache } from "../services/labStore";
 
 export type LessonType = "video" | "embed";
 export type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -837,6 +837,23 @@ export const defaultLabConfigs: Record<string, LabConfig> = {
 initLabStore(defaultLabConfigs);
 export const labConfigs: Record<string, LabConfig> = getEffectiveConfigs();
 export const labsList = Object.values(labConfigs);
+
+/*
+ * Phase 3: these exports are module-level snapshots; refresh them in place
+ * after a cloud pull rewrites localStorage so every consumer (Home grid,
+ * Lab page, gamification totals) sees the latest content without reload.
+ * Registered here (module eval) so it runs BEFORE React listeners re-render.
+ */
+if (typeof window !== "undefined") {
+  window.addEventListener("robotech-cloud-updated", () => {
+    invalidateLabCache();
+    const next = getEffectiveConfigs();
+    for (const k of Object.keys(labConfigs)) delete labConfigs[k];
+    Object.assign(labConfigs, next);
+    labsList.length = 0;
+    labsList.push(...Object.values(next));
+  });
+}
 export const difficultyColors: Record<Difficulty, string> = {
   beginner: "#43e97b",
   intermediate: "#f7971e",
