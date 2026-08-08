@@ -1,5 +1,23 @@
 import { useState, useEffect, useMemo } from "react";
 import { getLeaderboard } from "../../hooks/useGamification";
+import { supabase, isOnline } from "../../services/supabaseClient";
+
+/** Fetch all student profiles from Supabase (admin RLS allows reading every row). */
+async function fetchCloudUsers(): Promise<AdminUser[]> {
+  if (!supabase || !isOnline()) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("email,name,avatar,join_date,role");
+  if (error || !data) return [];
+  return data
+    .filter(r => r.role !== "admin" && r.email)
+    .map(r => ({
+      email: String(r.email).toLowerCase(),
+      name: r.name ?? String(r.email).split("@")[0],
+      avatar: r.avatar ?? "🤖",
+      joinDate: r.join_date ?? "",
+    }));
+}
 
 interface AdminUser {
   email: string;
@@ -21,7 +39,7 @@ function loadProgress(): Record<string, unknown> {
   return result;
 }
 
-function deleteUser(email: string) {
+function deleteUser(email: string): Promise<void> {
   const users = loadUsers();
   delete users[email.toLowerCase()];
   localStorage.setItem("robotech_users_db", JSON.stringify(users));
@@ -32,6 +50,16 @@ function deleteUser(email: string) {
   const profiles = JSON.parse(localStorage.getItem("robotech_gam_profiles_v2") ?? "{}");
   delete profiles[email.toLowerCase()];
   localStorage.setItem("robotech_gam_profiles_v2", JSON.stringify(profiles));
+  // Best-effort cloud cleanup so the user doesn't reappear from Supabase.
+  if (supabase && isOnline()) {
+    const e = email.toLowerCase();
+    return Promise.allSettled([
+      supabase.from("profiles").delete().eq("email", e),
+      supabase.from("gam_profiles").delete().eq("email", e),
+      supabase.from("user_state").delete().eq("email", e),
+    ]).then(() => undefined);
+  }
+  return Promise.resolve();
 }
 
 type SortKey = "xp" | "level" | "streak" | "badges" | "name";
@@ -56,6 +84,17 @@ export default function UsersModule() {
       .map(([email, v]) => ({ email, name: v.name, avatar: v.avatar, joinDate: v.joinDate }));
     setUsers(list);
     setLeaderboard(getLeaderboard());
+    // Merge in every registered account from Supabase (cross-device list).
+    let cancelled = false;
+    fetchCloudUsers().then(cloud => {
+      if (cancelled || cloud.length === 0) return;
+      setUsers(prev => {
+        const byEmail = new Map(prev.map(u => [u.email.toLowerCase(), u]));
+        for (const c of cloud) if (!byEmail.has(c.email)) byEmail.set(c.email, c);
+        return Array.from(byEmail.values());
+      });
+    });
+    return () => { cancelled = true; };
   }, [tick]);
 
   const stats = useMemo(() => {
@@ -97,9 +136,10 @@ export default function UsersModule() {
   };
 
   const handleDelete = (email: string) => {
-    deleteUser(email);
     setConfirmDelete(null);
-    setTick(t => t + 1);
+    // Wait for the cloud cleanup before re-fetching, otherwise the refresh
+    // could re-merge the just-deleted cloud row.
+    deleteUser(email).finally(() => setTick(t => t + 1));
   };
 
   const SortIcon = ({ k }: { k: SortKey }) =>
